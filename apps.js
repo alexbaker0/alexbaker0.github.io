@@ -47,10 +47,10 @@ window.APPS = [
     items: [
       {
         name: "AlexZero Connect Four",
-        desc: "An AlphaZero-style agent that learned Connect Four by playing millions of moves against itself.",
+        desc: "An AlphaZero-style agent that learned Connect Four purely by playing against itself. It runs entirely in your browser.",
         tags: ["AlphaZero", "Game"],
         url: "/connect4/",
-        status: "soon",
+        status: "live",
         icon: "connect4",
       },
       {
