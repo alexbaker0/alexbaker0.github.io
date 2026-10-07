@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alex's Lab</title>
+<meta name="description" content="Simulations, fractals and self-taught AI games that Alex has built.">
+<style>
+  :root {
+    --bg: #f6f5f1;
+    --card: #ffffff;
+    --edge: #e4e1d8;
+    --ink: #1c1d21;
+    --ink-dim: #5f636d;
+    --ink-faint: #8d919a;
+    --accent: #d9622b;
+    --accent-2: #2b7bd9;
+    --icon-bg: #f1eee6;
+    --shadow: 0 1px 2px rgba(20,20,30,.05), 0 8px 24px rgba(20,20,30,.06);
+    --shadow-hover: 0 2px 4px rgba(20,20,30,.06), 0 16px 40px rgba(20,20,30,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1015;
+      --card: #171a21;
+      --edge: #252a34;
+      --ink: #eceef2;
+      --ink-dim: #a3a9b6;
+      --ink-faint: #6e7584;
+      --accent: #f08a4b;
+      --accent-2: #5ea3f2;
+      --icon-bg: #1f232c;
+      --shadow: 0 1px 2px rgba(0,0,0,.3);
+      --shadow-hover: 0 12px 32px rgba(0,0,0,.45);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  header { padding: 64px 0 24px; }
+  h1 { font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
+  .intro { color: var(--ink-dim); max-width: 56ch; margin: 0; font-size: 1.05rem; }
+  section { padding: 32px 0 8px; }
+  h2 { font-size: 1.1rem; margin: 0; }
+  .blurb { color: var(--ink-faint); margin: 2px 0 16px; font-size: .95rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    position: relative;
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 18px;
+    background: var(--card);
+    border: 1px solid var(--edge);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    color: inherit; text-decoration: none;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  a.card:hover, a.card:focus-visible { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--accent); outline: none; }
+  .card.soon { opacity: .6; cursor: default; }
+  .icon {
+    width: 56px; height: 56px; border-radius: 12px;
+    background: var(--icon-bg);
+    display: grid; place-items: center;
+  }
+  .icon svg { width: 36px; height: 36px; }
+  .card h3 { margin: 0; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--ink-dim); font-size: .92rem; flex: 1; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: .75rem; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--edge); color: var(--ink-faint); }
+  .badge {
+    position: absolute; top: 14px; right: 14px;
+    font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  footer { padding: 48px 0 40px; color: var(--ink-faint); font-size: .85rem; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Alex's <span>Lab</span></h1>
+    <p class="intro">Things I've built for fun: simulations, fractals, and AI that taught itself to play games. Click any card to try it in your browser.</p>
+  </header>
+  <main id="groups"></main>
+  <footer>Built with curiosity, and a fair amount of help from Claude.</footer>
+</div>
+
+<script src="apps.js"></script>
+<script>
+  // Small hand-drawn icons. currentColor = ink, var(--accent)/var(--accent-2) for highlights.
+  const ICONS = {
+    boids: `<svg viewBox="0 0 36 36" fill="none"><g fill="var(--accent)"><path d="M6 20l7-3-2 6z"/><path d="M14 11l7-3-2 6z"/><path d="M20 22l7-3-2 6z"/></g><path d="M25 10l6-2-2 5z" fill="var(--accent-2)"/></svg>`,
+    mandelbrot: `<svg viewBox="0 0 36 36"><circle cx="21" cy="18" r="8" fill="var(--accent)"/><circle cx="10.5" cy="18" r="3.5" fill="var(--accent)"/><circle cx="5.5" cy="18" r="1.4" fill="var(--accent)"/><circle cx="21" cy="8.5" r="2" fill="var(--accent-2)"/><circle cx="21" cy="27.5" r="2" fill="var(--accent-2)"/></svg>`,
+    pendulum: `<svg viewBox="0 0 36 36" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 5L11 17L22 26" stroke="currentColor"/><circle cx="18" cy="5" r="2" fill="currentColor"/><circle cx="11" cy="17" r="3.2" fill="var(--accent)"/><circle cx="22" cy="26" r="3.2" fill="var(--accent-2)"/><path d="M6 28c4-6 10 2 16-6" stroke="var(--accent-2)" stroke-width="1.2" stroke-dasharray="2 2"/></svg>`,
+    cells: `<svg viewBox="0 0 36 36"><g fill="var(--accent)"><rect x="4" y="22" width="5" height="8" rx="1.5"/><rect x="10.5" y="18" width="5" height="12" rx="1.5"/><rect x="17" y="14" width="5" height="16" rx="1.5"/></g><g fill="var(--accent-2)"><rect x="23.5" y="20" width="5" height="10" rx="1.5"/><rect x="30" y="8" width="3" height="22" rx="1.5" opacity=".6"/></g></svg>`,
+    connect4: `<svg viewBox="0 0 36 36"><rect x="3" y="6" width="30" height="25" rx="3" fill="var(--accent-2)"/><g fill="var(--icon-bg)"><circle cx="10" cy="13" r="3"/><circle cx="18" cy="13" r="3"/><circle cx="26" cy="13" r="3"/><circle cx="10" cy="24" r="3"/></g><circle cx="18" cy="24" r="3" fill="var(--accent)"/><circle cx="26" cy="24" r="3" fill="#f2c94c"/></svg>`,
+    othello: `<svg viewBox="0 0 36 36"><rect x="3" y="3" width="30" height="30" rx="3" fill="#2f8f5b"/><path d="M18 3v30M3 18h30" stroke="#246f47"/><circle cx="10.5" cy="10.5" r="5" fill="#fff"/><circle cx="25.5" cy="25.5" r="5" fill="#fff"/><circle cx="25.5" cy="10.5" r="5" fill="#111"/><circle cx="10.5" cy="25.5" r="5" fill="#111"/></svg>`,
+    breakout: `<svg viewBox="0 0 36 36"><g fill="var(--accent)"><rect x="3" y="5" width="9" height="4" rx="1"/><rect x="13.5" y="5" width="9" height="4" rx="1"/><rect x="24" y="5" width="9" height="4" rx="1"/></g><g fill="var(--accent-2)"><rect x="3" y="10.5" width="9" height="4" rx="1"/><rect x="24" y="10.5" width="9" height="4" rx="1"/></g><circle cx="20" cy="21" r="2" fill="currentColor"/><rect x="11" y="28" width="12" height="3" rx="1.5" fill="currentColor"/></svg>`,
+    tictactoe: `<svg viewBox="0 0 36 36" fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M14 5v26M22 5v26M5 14h26M5 22h26" stroke="currentColor" opacity=".35"/><path d="M6.5 6.5l5 5M11.5 6.5l-5 5M24.5 24.5l5 5M29.5 24.5l-5 5" stroke="var(--accent)"/><circle cx="18" cy="18" r="2.6" stroke="var(--accent-2)"/></svg>`,
+  };
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function card(app) {
+    const live = app.status === "live";
+    const inner = `
+      ${live ? "" : `<span class="badge">Coming soon</span>`}
+      <div class="icon">${ICONS[app.icon] || ""}</div>
+      <h3>${esc(app.name)}</h3>
+      <p>${esc(app.desc)}</p>
+      <div class="tags">${app.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`;
+    return live
+      ? `<a class="card" href="${esc(app.url)}">${inner}</a>`
+      : `<div class="card soon" aria-disabled="true">${inner}</div>`;
+  }
+
+  document.getElementById("groups").innerHTML = window.APPS.map(g => `
+    <section>
+      <h2>${esc(g.group)}</h2>
+      <p class="blurb">${esc(g.blurb)}</p>
+      <div class="grid">${g.items.map(card).join("")}</div>
+    </section>`).join("");
+</script>
+</body>
+</html>
