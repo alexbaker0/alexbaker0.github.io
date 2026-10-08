@@ -85,10 +85,10 @@ window.APPS = [
       },
       {
         name: "Thro' the Wall",
-        desc: "A remake of the ZX Spectrum classic, with a reinforcement-learning agent that learned to play it.",
+        desc: "A remake of the ZX Spectrum classic. Play it yourself, or watch an AI that taught itself to clear the whole wall.",
         tags: ["PPO", "Retro"],
         url: "/thro-the-wall/",
-        status: "soon",
+        status: "live",
         icon: "breakout",
       },
       {
