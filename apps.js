@@ -4,6 +4,20 @@
 // which GitHub Pages serves from a repo called "boids" (paths are case-sensitive).
 window.APPS = [
   {
+    group: "Personal finance",
+    blurb: "Hosted on Railway. Sign in with a code sent to your email.",
+    items: [
+      {
+        name: "Freedom Planner",
+        desc: "Plan your financial freedom. Model cash, ISAs, pensions and property over your lifetime, then try what-if scenarios to see how to get there sooner.",
+        tags: ["UK", "Planning"],
+        url: "https://freedom-planner-production.up.railway.app/",
+        status: "live",
+        icon: "finance",
+      },
+    ],
+  },
+  {
     group: "Simulations & toys",
     blurb: "Things that run in your browser.",
     items: [

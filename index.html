@@ -90,7 +90,7 @@
 <div class="wrap">
   <header>
     <h1>Alex's <span>Lab</span></h1>
-    <p class="intro">Things I've built for fun: simulations, fractals, and AI that taught itself to play games. Click any card to try it in your browser.</p>
+    <p class="intro">Things I've built: a personal finance planner, simulations, fractals, and AI that taught itself to play games. Click any card to try it in your browser.</p>
   </header>
   <main id="groups"></main>
   <footer>Built with curiosity, and a fair amount of help from Claude.</footer>
@@ -100,6 +100,7 @@
 <script>
   // Small hand-drawn icons. currentColor = ink, var(--accent)/var(--accent-2) for highlights.
   const ICONS = {
+    finance: `<svg viewBox="0 0 36 36" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 31h26" stroke="currentColor" stroke-width="1.6" opacity=".35"/><g fill="var(--accent-2)"><rect x="7" y="22" width="4" height="6" rx="1"/><rect x="14" y="18" width="4" height="10" rx="1"/><rect x="21" y="14" width="4" height="14" rx="1"/></g><path d="M6 17l7-5 6 3 10-8" stroke="var(--accent)" stroke-width="2.4"/><path d="M24 7h5v5" stroke="var(--accent)" stroke-width="2.4"/></svg>`,
     boids: `<svg viewBox="0 0 36 36" fill="none"><g fill="var(--accent)"><path d="M6 20l7-3-2 6z"/><path d="M14 11l7-3-2 6z"/><path d="M20 22l7-3-2 6z"/></g><path d="M25 10l6-2-2 5z" fill="var(--accent-2)"/></svg>`,
     mandelbrot: `<svg viewBox="0 0 36 36"><circle cx="21" cy="18" r="8" fill="var(--accent)"/><circle cx="10.5" cy="18" r="3.5" fill="var(--accent)"/><circle cx="5.5" cy="18" r="1.4" fill="var(--accent)"/><circle cx="21" cy="8.5" r="2" fill="var(--accent-2)"/><circle cx="21" cy="27.5" r="2" fill="var(--accent-2)"/></svg>`,
     pendulum: `<svg viewBox="0 0 36 36" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M18 5L11 17L22 26" stroke="currentColor"/><circle cx="18" cy="5" r="2" fill="currentColor"/><circle cx="11" cy="17" r="3.2" fill="var(--accent)"/><circle cx="22" cy="26" r="3.2" fill="var(--accent-2)"/><path d="M6 28c4-6 10 2 16-6" stroke="var(--accent-2)" stroke-width="1.2" stroke-dasharray="2 2"/></svg>`,
@@ -120,8 +121,10 @@
       <h3>${esc(app.name)}</h3>
       <p>${esc(app.desc)}</p>
       <div class="tags">${app.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>`;
+    // Apps hosted elsewhere (e.g. Railway) open in a new tab.
+    const external = /^https?:/.test(app.url) ? ' target="_blank" rel="noopener"' : "";
     return live
-      ? `<a class="card" href="${esc(app.url)}">${inner}</a>`
+      ? `<a class="card" href="${esc(app.url)}"${external}>${inner}</a>`
       : `<div class="card soon" aria-disabled="true">${inner}</div>`;
   }
 
