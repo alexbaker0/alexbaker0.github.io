@@ -5,7 +5,7 @@
 window.APPS = [
   {
     group: "Personal finance",
-    blurb: "Hosted on Railway. Sign in with a code sent to your email.",
+    blurb: "Manage your finances",
     items: [
       {
         name: "Freedom Planner",
