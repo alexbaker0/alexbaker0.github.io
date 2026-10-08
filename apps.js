@@ -22,6 +22,14 @@ window.APPS = [
     blurb: "Things that run in your browser.",
     items: [
       {
+        name: "The Juggler",
+        desc: "Eric Graham's famous 1986 Amiga ray tracer, running his original scene in your browser. Spin the camera or edit the scene file.",
+        tags: ["Ray tracing", "Retro"],
+        url: "/juggler/",
+        status: "live",
+        icon: "juggler",
+      },
+      {
         name: "Boids",
         desc: "A flock of birds from three simple rules: separation, alignment and cohesion. In 2D and 3D.",
         tags: ["Simulation", "3D"],
