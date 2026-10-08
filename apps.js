@@ -9,7 +9,7 @@ window.APPS = [
     items: [
       {
         name: "Freedom Planner",
-        desc: "Plan your financial freedom. Model cash, ISAs, pensions and property over your lifetime, then try what-if scenarios to see how to get there sooner.",
+        desc: "Plan your finances to support the life you want",
         tags: ["UK", "Planning"],
         url: "https://freedom-planner-production.up.railway.app/",
         status: "live",
@@ -56,12 +56,12 @@ window.APPS = [
     ],
   },
   {
-    group: "Rendering",
-    blurb: "3D graphics, from 1980s ray tracing to medical imaging.",
+    group: "Graphics",
+    blurb: "3D graphics and rendering",
     items: [
       {
         name: "The Juggler",
-        desc: "Eric Graham's famous 1986 Amiga ray tracer, running his original scene in your browser. Spin the camera or edit the scene file.",
+        desc: "Eric Graham's famous 1986 Amiga ray tracer, running his original scene",
         tags: ["Ray tracing", "Retro"],
         url: "/juggler/",
         status: "live",
@@ -69,7 +69,7 @@ window.APPS = [
       },
       {
         name: "MRI Viewer",
-        desc: "Explore MRI scans in 3D: slice through them in three planes or rotate a volume rendering. Opens sample head scans, or load your own.",
+        desc: "Explore MRI scans in 3D: slice through them in three planes or rotate a volume rendering.",
         tags: ["Medical imaging", "3D"],
         url: "/mri-viewer/",
         status: "live",
@@ -78,12 +78,12 @@ window.APPS = [
     ],
   },
   {
-    group: "AI that taught itself",
-    blurb: "Agents trained from scratch, with no human examples. Play against them or watch them.",
+    group: "Self taught AI models",
+    blurb: "Agents trained from scratch.",
     items: [
       {
         name: "AlexZero Connect Four",
-        desc: "An AlphaZero-style agent that learned Connect Four purely by playing against itself. It runs entirely in your browser.",
+        desc: "Model learned by playing itself",
         tags: ["AlphaZero", "Game"],
         url: "/connect4/",
         status: "live",
@@ -91,7 +91,7 @@ window.APPS = [
       },
       {
         name: "AlexZero Othello",
-        desc: "The same self-play recipe applied to Othello. It won 14 of 20 test games against a classic alpha-beta player. Includes a watch-it-play demo.",
+        desc: "Self trained model",
         tags: ["AlphaZero", "Game"],
         url: "/othello/",
         status: "live",
@@ -99,7 +99,7 @@ window.APPS = [
       },
       {
         name: "Thro' the Wall",
-        desc: "A remake of the ZX Spectrum classic. Play it yourself, or watch an AI that taught itself to clear the whole wall.",
+        desc: "The ZX Spectrum classic",
         tags: ["PPO", "Retro"],
         url: "/thro-the-wall/",
         status: "live",
@@ -107,7 +107,7 @@ window.APPS = [
       },
       {
         name: "Tic-Tac-Toe Zero",
-        desc: "Where it started. A tiny network trained from scratch in NumPy. Unbeatable on Hard, and you can watch how it weighs each square.",
+        desc: "You know this one",
         tags: ["AlphaZero", "Game"],
         url: "/tictactoe/",
         status: "live",
