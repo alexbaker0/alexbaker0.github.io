@@ -4,8 +4,8 @@
 // which GitHub Pages serves from a repo called "boids" (paths are case-sensitive).
 window.APPS = [
   {
-    group: "Personal finance",
-    blurb: "Manage your finances",
+    group: "Life planning",
+    blurb: "Plan your finances and your next home",
     items: [
       {
         name: "Freedom Planner",
@@ -14,6 +14,14 @@ window.APPS = [
         url: "https://freedom-planner-production.up.railway.app/",
         status: "live",
         icon: "finance",
+      },
+      {
+        name: "MyNestQuest",
+        desc: "Find the best place to live: commute times, schools, rents, house prices, crime and more",
+        tags: ["UK", "Maps"],
+        url: "",
+        status: "soon",
+        icon: "house",
       },
     ],
   },
