@@ -22,14 +22,6 @@ window.APPS = [
     blurb: "Things that run in your browser.",
     items: [
       {
-        name: "The Juggler",
-        desc: "Eric Graham's famous 1986 Amiga ray tracer, running his original scene in your browser. Spin the camera or edit the scene file.",
-        tags: ["Ray tracing", "Retro"],
-        url: "/juggler/",
-        status: "live",
-        icon: "juggler",
-      },
-      {
         name: "Boids",
         desc: "A flock of birds from three simple rules: separation, alignment and cohesion. In 2D and 3D.",
         tags: ["Simulation", "3D"],
@@ -64,8 +56,30 @@ window.APPS = [
     ],
   },
   {
+    group: "Rendering",
+    blurb: "3D graphics, from 1980s ray tracing to medical imaging.",
+    items: [
+      {
+        name: "The Juggler",
+        desc: "Eric Graham's famous 1986 Amiga ray tracer, running his original scene in your browser. Spin the camera or edit the scene file.",
+        tags: ["Ray tracing", "Retro"],
+        url: "/juggler/",
+        status: "live",
+        icon: "juggler",
+      },
+      {
+        name: "MRI Viewer",
+        desc: "Explore MRI scans in 3D: slice through them in three planes or rotate a volume rendering. Opens sample head scans, or load your own.",
+        tags: ["Medical imaging", "3D"],
+        url: "/mri-viewer/",
+        status: "live",
+        icon: "mri",
+      },
+    ],
+  },
+  {
     group: "AI that taught itself",
-    blurb: "Agents trained from scratch by self-play. Play against them.",
+    blurb: "Agents trained from scratch, with no human examples. Play against them or watch them.",
     items: [
       {
         name: "AlexZero Connect Four",
