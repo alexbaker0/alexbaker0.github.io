@@ -55,10 +55,10 @@ window.APPS = [
       },
       {
         name: "AlexZero Othello",
-        desc: "The same self-play recipe applied to Othello, trained overnight.",
+        desc: "The same self-play recipe applied to Othello. It won 14 of 20 test games against a classic alpha-beta player. Includes a watch-it-play demo.",
         tags: ["AlphaZero", "Game"],
         url: "/othello/",
-        status: "soon",
+        status: "live",
         icon: "othello",
       },
       {
