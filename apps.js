@@ -85,10 +85,10 @@ window.APPS = [
       },
       {
         name: "Tic-Tac-Toe Zero",
-        desc: "Where it started. A tiny self-play agent that never loses.",
+        desc: "Where it started. A tiny network trained from scratch in NumPy. Unbeatable on Hard, and you can watch how it weighs each square.",
         tags: ["AlphaZero", "Game"],
         url: "/tictactoe/",
-        status: "soon",
+        status: "live",
         icon: "tictactoe",
       },
     ],
