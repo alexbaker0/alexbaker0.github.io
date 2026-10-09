@@ -8,9 +8,9 @@ window.APPS = [
     blurb: "Plan your finances and your next home",
     items: [
       {
-        name: "Freedom Planner",
+        name: "Financial Planner",
         desc: "Plan your finances to support the life you want",
-        tags: ["UK", "Planning"],
+        tags: ["Financial", "Planning"],
         url: "https://freedom-planner-production.up.railway.app/",
         status: "live",
         icon: "finance",
