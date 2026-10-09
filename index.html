@@ -4,94 +4,192 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Alex's Lab</title>
-<meta name="description" content="Simulations, fractals and self-taught AI games that Alex has built.">
+<meta name="description" content="A few things Alex has built: life-planning tools, simulations, 3D graphics and self-taught AI games.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Cpath d=%27M25 6h14v18l15 26a6 6 0 0 1-5 9H15a6 6 0 0 1-5-9l15-26z%27 fill=%27%237c3aed%27/%3E%3Cpath d=%27M15 40h34l5 10a6 6 0 0 1-5 9H15a6 6 0 0 1-5-9z%27 fill=%27%23f472b6%27/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg: #f6f5f1;
+    --bg: #f7f6fb;
     --card: #ffffff;
-    --edge: #e4e1d8;
-    --ink: #1c1d21;
-    --ink-dim: #5f636d;
-    --ink-faint: #8d919a;
-    --accent: #d9622b;
-    --accent-2: #2b7bd9;
-    --icon-bg: #f1eee6;
-    --shadow: 0 1px 2px rgba(20,20,30,.05), 0 8px 24px rgba(20,20,30,.06);
-    --shadow-hover: 0 2px 4px rgba(20,20,30,.06), 0 16px 40px rgba(20,20,30,.12);
+    --edge: #e6e3ef;
+    --ink: #1c1d26;
+    --ink-dim: #5c6070;
+    --ink-faint: #8a8ea0;
+    --dot: rgba(90, 80, 140, .10);
+    --shadow: 0 1px 2px rgba(30,20,60,.05), 0 8px 24px rgba(30,20,60,.06);
+    /* per-group colours; each section overrides --g1/--g2 */
+    --g1: #6366f1; --g2: #ec4899;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0e1015;
-      --card: #171a21;
-      --edge: #252a34;
-      --ink: #eceef2;
-      --ink-dim: #a3a9b6;
-      --ink-faint: #6e7584;
-      --accent: #f08a4b;
-      --accent-2: #5ea3f2;
-      --icon-bg: #1f232c;
-      --shadow: 0 1px 2px rgba(0,0,0,.3);
-      --shadow-hover: 0 12px 32px rgba(0,0,0,.45);
+      --bg: #0d0e16;
+      --card: #161826;
+      --edge: #262a3d;
+      --ink: #eceef6;
+      --ink-dim: #a6abbe;
+      --ink-faint: #6f7489;
+      --dot: rgba(160, 150, 255, .07);
+      --shadow: 0 1px 2px rgba(0,0,0,.35);
     }
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: var(--bg);
+    background:
+      radial-gradient(var(--dot) 1px, transparent 1.5px) 0 0 / 22px 22px,
+      var(--bg);
     color: var(--ink);
     font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
-  header { padding: 64px 0 24px; }
-  h1 { font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
-  h1 span { color: var(--accent); }
-  .intro { color: var(--ink-dim); max-width: 56ch; margin: 0; font-size: 1.05rem; }
-  section { padding: 32px 0 8px; }
-  h2 { font-size: 1.1rem; margin: 0; }
-  .blurb { color: var(--ink-faint); margin: 2px 0 16px; font-size: .95rem; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative; overflow: hidden; color: #fff;
+    background: linear-gradient(120deg, #3b1d8f 0%, #6d28d9 38%, #c026d3 68%, #f97316 100%);
+    border-radius: 0 0 28px 28px;
+  }
+  .hero .blob { position: absolute; border-radius: 50%; filter: blur(40px); opacity: .55; pointer-events: none; }
+  .hero .b1 { width: 340px; height: 340px; background: #22d3ee; top: -140px; right: 8%; animation: drift 18s ease-in-out infinite alternate; }
+  .hero .b2 { width: 260px; height: 260px; background: #facc15; bottom: -150px; left: 35%; animation: drift 22s ease-in-out infinite alternate-reverse; }
+  .hero .b3 { width: 220px; height: 220px; background: #10b981; top: 20%; left: -90px; animation: drift 26s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(40px, 30px) scale(1.15); } }
+  .hero .wrap { position: relative; display: flex; align-items: center; gap: 26px; padding-top: 56px; padding-bottom: 52px; }
+  .logo { flex: none; width: 112px; height: 112px; filter: drop-shadow(0 10px 24px rgba(30,0,60,.35)); }
+  h1 { font-size: clamp(2.3rem, 7vw, 3.6rem); line-height: 1.05; margin: 0 0 10px; letter-spacing: -0.03em; font-weight: 800; }
+  h1 span {
+    background: linear-gradient(90deg, #fde047, #fb923c, #f472b6, #67e8f9, #fde047);
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: shimmer 8s linear infinite;
+  }
+  @keyframes shimmer { to { background-position: 200% 0; } }
+  .intro { color: rgba(255,255,255,.88); max-width: 56ch; margin: 0; font-size: 1.15rem; }
+
+  /* ---------- logo animation ---------- */
+  .logo .bub { animation: rise 2.8s ease-in infinite; transform-box: fill-box; transform-origin: center; opacity: 0; }
+  .logo .bub.d1 { animation-delay: .9s; animation-duration: 3.2s; }
+  .logo .bub.d2 { animation-delay: 1.7s; animation-duration: 2.5s; }
+  .logo .bub.d3 { animation-delay: 2.3s; animation-duration: 3.6s; }
+  @keyframes rise {
+    0% { transform: translateY(0) scale(.6); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translateY(-46px) scale(1.15); opacity: 0; }
+  }
+  .logo .spark { animation: twinkle 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .logo .spark.s2 { animation-delay: 1.2s; }
+  @keyframes twinkle { 0%, 100% { opacity: .2; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
+  .logo .liquid { animation: hue 10s linear infinite; }
+  @keyframes hue { to { filter: hue-rotate(360deg); } }
+
+  /* ---------- groups ---------- */
+  main { padding-top: 8px; }
+  section { padding: 34px 0 6px; }
+  .ghead { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .gdot {
+    width: 38px; height: 38px; border-radius: 12px; flex: none;
+    background: linear-gradient(135deg, var(--g1), var(--g2));
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--g1) 35%, transparent);
+  }
+  h2 { font-size: 1.25rem; margin: 0; line-height: 1.2; }
+  .blurb { color: var(--ink-faint); margin: 2px 0 0; font-size: .95rem; }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 16px;
   }
   .card {
-    position: relative;
+    --accent: var(--g1); --accent-2: var(--g2);
+    --icon-bg: color-mix(in srgb, var(--g1) 13%, var(--card));
+    position: relative; overflow: hidden;
     display: flex; flex-direction: column; gap: 10px;
-    padding: 18px;
+    padding: 20px 18px 18px;
     background: var(--card);
     border: 1px solid var(--edge);
-    border-radius: 14px;
+    border-radius: 16px;
     box-shadow: var(--shadow);
     color: inherit; text-decoration: none;
-    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
   }
-  a.card:hover, a.card:focus-visible { transform: translateY(-3px); box-shadow: var(--shadow-hover); border-color: var(--accent); outline: none; }
-  .card.soon { opacity: .6; cursor: default; }
+  .card::before {
+    content: ""; position: absolute; inset: 0 0 auto 0; height: 4px;
+    background: linear-gradient(90deg, var(--g1), var(--g2));
+  }
+  a.card:hover, a.card:focus-visible {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--g1) 55%, var(--edge));
+    box-shadow: 0 14px 34px color-mix(in srgb, var(--g1) 28%, transparent);
+    outline: none;
+  }
+  a.card:hover .icon { transform: rotate(-6deg) scale(1.06); }
+  .card.soon { opacity: .62; cursor: default; }
   .icon {
-    width: 56px; height: 56px; border-radius: 12px;
+    width: 58px; height: 58px; border-radius: 14px;
     background: var(--icon-bg);
     display: grid; place-items: center;
+    transition: transform .2s ease;
   }
   .icon svg { width: 36px; height: 36px; }
   .card h3 { margin: 0; font-size: 1.05rem; }
   .card p { margin: 0; color: var(--ink-dim); font-size: .92rem; flex: 1; }
   .tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag { font-size: .75rem; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--edge); color: var(--ink-faint); }
-  .badge {
-    position: absolute; top: 14px; right: 14px;
-    font-size: .7rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
-    color: var(--ink-faint);
+  .tag {
+    font-size: .75rem; padding: 2px 9px; border-radius: 99px;
+    color: color-mix(in srgb, var(--g1) 75%, var(--ink));
+    background: color-mix(in srgb, var(--g1) 10%, var(--card));
   }
-  footer { padding: 48px 0 40px; color: var(--ink-faint); font-size: .85rem; }
+  .badge {
+    position: absolute; top: 16px; right: 14px;
+    font-size: .68rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    color: #fff; padding: 3px 8px; border-radius: 99px;
+    background: linear-gradient(90deg, var(--g1), var(--g2));
+  }
+  footer { padding: 48px 0 40px; color: var(--ink-faint); font-size: .85rem; text-align: center; }
   footer a { color: inherit; }
+
+  @media (max-width: 560px) {
+    .hero .wrap { flex-direction: column; align-items: flex-start; gap: 14px; padding-top: 36px; padding-bottom: 36px; }
+    .logo { width: 84px; height: 84px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .logo .bub { opacity: .8; }
+  }
 </style>
 </head>
 <body>
+<header class="hero">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="wrap">
+    <svg class="logo" viewBox="0 0 120 120" role="img" aria-label="Lab flask logo">
+      <defs>
+        <linearGradient id="liq" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#22d3ee"/><stop offset=".5" stop-color="#a78bfa"/><stop offset="1" stop-color="#f472b6"/>
+        </linearGradient>
+        <clipPath id="flaskIn"><path d="M50 30h20v24l23 38a8 8 0 0 1-7 12H34a8 8 0 0 1-7-12l23-38z"/></clipPath>
+      </defs>
+      <g clip-path="url(#flaskIn)">
+        <rect x="20" y="30" width="80" height="80" fill="#fff" opacity=".18"/>
+        <path class="liquid" d="M20 76c12-6 22 6 40 0s28-6 44 0V110H20z" fill="url(#liq)"/>
+        <circle class="bub" cx="52" cy="96" r="4" fill="#fff"/>
+        <circle class="bub d1" cx="66" cy="98" r="3" fill="#fff"/>
+        <circle class="bub d2" cx="58" cy="100" r="2.5" fill="#fff"/>
+        <circle class="bub d3" cx="72" cy="94" r="2" fill="#fff"/>
+      </g>
+      <path d="M50 30h20v24l23 38a8 8 0 0 1-7 12H34a8 8 0 0 1-7-12l23-38z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+      <rect x="45" y="22" width="30" height="9" rx="4.5" fill="#fff"/>
+      <path d="M55 62l-9 15" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".6"/>
+      <circle class="bub d1" cx="60" cy="18" r="3.5" fill="#fde047"/>
+      <circle class="bub d3" cx="68" cy="14" r="2.5" fill="#67e8f9"/>
+      <path class="spark" d="M95 24l2.5 6 6 2.5-6 2.5-2.5 6-2.5-6-6-2.5 6-2.5z" fill="#fde047"/>
+      <path class="spark s2" d="M24 40l1.8 4.2 4.2 1.8-4.2 1.8-1.8 4.2-1.8-4.2-4.2-1.8 4.2-1.8z" fill="#fff"/>
+    </svg>
+    <div>
+      <h1>Alex's <span>Lab</span></h1>
+      <p class="intro">A few things I've built</p>
+    </div>
+  </div>
+</header>
 <div class="wrap">
-  <header>
-    <h1>Alex's <span>Lab</span></h1>
-    <p class="intro">A few things I've built</p>
-  </header>
   <main id="groups"></main>
   <footer>Built with curiosity</footer>
 </div>
@@ -131,12 +229,26 @@
       : `<div class="card soon" aria-disabled="true">${inner}</div>`;
   }
 
-  document.getElementById("groups").innerHTML = window.APPS.map(g => `
-    <section>
-      <h2>${esc(g.group)}</h2>
-      <p class="blurb">${esc(g.blurb)}</p>
+  // Each group gets its own colour pair, used by the heading, card stripes, icons and tags.
+  const PALETTES = [
+    ["#10b981", "#0ea5e9"],   // green -> sky
+    ["#f97316", "#f43f5e"],   // orange -> rose
+    ["#8b5cf6", "#ec4899"],   // violet -> pink
+    ["#3b82f6", "#06b6d4"],   // blue -> cyan
+    ["#eab308", "#f97316"],   // amber -> orange (spare for a 5th group)
+  ];
+
+  document.getElementById("groups").innerHTML = window.APPS.map((g, i) => {
+    const [g1, g2] = PALETTES[i % PALETTES.length];
+    return `
+    <section style="--g1:${g1};--g2:${g2}">
+      <div class="ghead">
+        <div class="gdot"></div>
+        <div><h2>${esc(g.group)}</h2><p class="blurb">${esc(g.blurb)}</p></div>
+      </div>
       <div class="grid">${g.items.map(card).join("")}</div>
-    </section>`).join("");
+    </section>`;
+  }).join("");
 </script>
 </body>
 </html>
