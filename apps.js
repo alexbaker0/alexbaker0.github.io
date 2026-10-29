@@ -61,6 +61,14 @@ window.APPS = [
         status: "live",
         icon: "cells",
       },
+      {
+        name: "BFF Primordial Soup",
+        desc: "A soup of random programs that rewrite each other. Nobody writes a replicator, yet one usually appears and takes over.",
+        tags: ["Artificial life", "Simulation"],
+        url: "/Bff-soup/",
+        status: "live",
+        icon: "soup",
+      },
     ],
   },
   {
