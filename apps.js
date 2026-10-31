@@ -123,10 +123,10 @@ window.APPS = [
       },
       {
         name: "Connectome Worm",
-        desc: "A simulated worm whose brain is the real wiring diagram of C. elegans' 302 neurons, learning to crawl towards food.",
+        desc: "Watch a simulated worm, whose brain is the real wiring diagram of C. elegans, crawl to food by smell while its neurons light up.",
         tags: ["Neuroscience", "Evolution strategies"],
         url: "/wormbrain/",
-        status: "soon",
+        status: "live",
         icon: "worm",
       },
       {
