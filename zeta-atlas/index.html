@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zeta Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an observatory bench. A wide instrument stage on the left, a narrow notebook of controls on the right; stacks on phones.
+   One deliberate dark world: the plots read best against night ink, so the page commits to a single dark look. */
+:root {
+  --ink: #0c0e16;        /* page ground */
+  --slate: #141826;      /* panels */
+  --rule: #262c40;       /* hairlines, grids */
+  --chalk: #e9e6dc;      /* text */
+  --dim: #8d93a8;        /* secondary text */
+  --amber: #f0b54a;      /* the primes / true values */
+  --cyan: #62d3e3;       /* waves, zeta-derived curves */
+  --rose: #ec7393;       /* the newest / current item */
+  --display: "Newsreader", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--ink); color: var(--chalk); font: 14px/1.5 var(--body); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 14px 28px; max-width: 1480px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+
+header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px 24px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); padding-bottom: 10px; }
+.brand { display: flex; align-items: baseline; gap: 12px; }
+.brand .glyph { font: italic 500 40px/1 var(--display); color: var(--amber); }
+.brand h1 { margin: 0; font: 500 26px/1.1 var(--display); letter-spacing: 0.01em; }
+.brand p { margin: 0; color: var(--dim); font-size: 13px; }
+nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+nav.tabs a { color: var(--dim); text-decoration: none; padding: 7px 12px; border: 1px solid transparent; border-radius: 6px; font-weight: 500; font-size: 13px; letter-spacing: 0.02em; }
+nav.tabs a:hover { color: var(--chalk); }
+nav.tabs a[aria-current="page"] { color: var(--chalk); border-color: var(--rule); background: var(--slate); }
+nav.tabs a .n { font-family: var(--mono); color: var(--amber); margin-right: 6px; font-size: 12px; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+.view { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; }
+@media (max-width: 920px) { .view { grid-template-columns: minmax(0, 1fr); } }
+.stage { position: relative; height: clamp(420px, calc(100vh - 140px), 820px); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+@media (max-width: 920px) { .stage { height: clamp(380px, 72vh, 640px); } }
+.plot { position: relative; flex: 1 1 0; min-height: 0; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--ink); }
+.plot.small { flex: 0 0 30%; }
+.plot canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.plot .tag { position: absolute; left: 8px; top: 6px; padding: 2px 6px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 78%, transparent); z-index: 1; font: 11px/1.3 var(--mono); color: var(--dim); letter-spacing: 0.04em; text-transform: uppercase; pointer-events: none; }
+.legend { position: absolute; right: 10px; top: 8px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; font: 12px/1.3 var(--mono); color: var(--dim); pointer-events: none; max-width: 70%; }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 2px; vertical-align: middle; margin-right: 6px; background: currentColor; }
+.legend .a { color: var(--amber); } .legend .c { color: var(--cyan); } .legend .r { color: var(--rose); } .legend .d { color: var(--dim); }
+.legend .d::before { background: repeating-linear-gradient(90deg, currentColor 0 4px, transparent 4px 7px); }
+.readout { position: absolute; left: 10px; bottom: 8px; font: 12px/1.45 var(--mono); color: var(--chalk); background: color-mix(in srgb, var(--ink) 82%, transparent); padding: 5px 8px; border-radius: 5px; border: 1px solid var(--rule); pointer-events: none; font-variant-numeric: tabular-nums; max-width: calc(100% - 20px); }
+.readout:empty { display: none; }
+.busy { position: absolute; right: 10px; bottom: 8px; font: 11px var(--mono); color: var(--dim); pointer-events: none; }
+
+aside.panel { background: var(--slate); border: 1px solid var(--rule); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 16px; min-width: 0; align-self: start; }
+aside.panel h2 { margin: 0; font: 500 22px/1.2 var(--display); text-wrap: balance; }
+aside.panel p { margin: 0; color: var(--dim); font-size: 13px; line-height: 1.55; }
+aside.panel p em, .formula em { font-family: var(--display); font-style: italic; font-size: 1.08em; color: var(--chalk); }
+.formula { font: 15px/1.7 var(--display); color: var(--chalk); padding: 8px 10px; border-left: 2px solid var(--amber); background: color-mix(in srgb, var(--ink) 55%, transparent); overflow-x: auto; }
+.formula .row { white-space: nowrap; }
+.group { display: flex; flex-direction: column; gap: 10px; }
+.group > .label { font: 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); }
+.ctl { display: flex; flex-direction: column; gap: 5px; }
+.ctl .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; }
+.ctl .val { font: 500 13px var(--mono); color: var(--chalk); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--amber); margin: 0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.num { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--dim); }
+.num input, select { width: 100%; background: var(--ink); color: var(--chalk); border: 1px solid var(--rule); border-radius: 5px; padding: 6px 8px; font: 13px var(--mono); }
+.btns { display: flex; gap: 6px; flex-wrap: wrap; }
+button { font: 500 13px var(--body); color: var(--chalk); background: var(--ink); border: 1px solid var(--rule); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+button:hover { border-color: var(--dim); }
+button.primary { background: var(--amber); color: var(--ink); border-color: var(--amber); }
+button.primary:hover { filter: brightness(1.08); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chips button { padding: 5px 9px; font-size: 12px; font-family: var(--mono); }
+.chips button[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+label.chk { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+label.chk input { accent-color: var(--cyan); }
+.stat { font: 12px/1.6 var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; }
+.stat b { color: var(--chalk); font-weight: 500; }
+.hint { font-size: 12px; color: var(--dim); }
+.colorwheel { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--dim); }
+.colorwheel canvas { width: 54px; height: 54px; flex: none; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<style>body{margin:0}img{max-width:100%}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="glyph" aria-hidden="true">ζ</span>
+      <div>
+        <h1>Zeta Atlas</h1>
+        <p>The Riemann zeta function, its zeros, and the primes they encode</p>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Views">
+      <a href="#staircase" data-view="staircase"><span class="n">I</span>Prime staircase</a>
+      <a href="#critical-line" data-view="critical-line"><span class="n">II</span>Up the critical strip</a>
+      <a href="#plane" data-view="plane"><span class="n">III</span>The complex plane</a>
+    </nav>
+  </header>
+
+  <!-- ============ I. STAIRCASE ============ -->
+  <section class="view" id="v-staircase" data-view="staircase">
+    <div class="stage">
+      <div class="plot" id="sc-plot">
+        <canvas id="sc-main"></canvas>
+        <div class="tag" id="sc-tag">π(x) and the explicit formula</div>
+        <div class="legend"><span class="a" id="sc-leg-true">π(x), true count</span><span class="c">with N zeros</span><span class="d">smooth term R(x)</span></div>
+        <div class="readout" id="sc-readout"></div>
+        <div class="busy" id="sc-busy"></div>
+      </div>
+      <div class="plot small" id="sc-wplot">
+        <canvas id="sc-waves"></canvas>
+        <div class="tag">The waves: sum of zero contributions</div>
+        <div class="legend"><span class="c">sum of all N waves</span><span class="r" id="sc-leg-new">newest wave</span></div>
+      </div>
+    </div>
+    <aside class="panel">
+      <h2>How the zeros build the staircase</h2>
+      <p>Riemann's explicit formula rebuilds the prime count exactly from the zeros <em>ρ</em> = ½ + <em>iγ</em> of ζ(<em>s</em>). The smooth term gives the trend. Each zero adds one wave that oscillates at frequency <em>γ</em> in log <em>x</em> with height about √<em>x</em> / (|<em>ρ</em>| log <em>x</em>). Add enough waves and a sharp step appears at every prime.</p>
+      <div class="formula">
+        <div class="row"><em>J</em>(<em>x</em>) = Li(<em>x</em>) − Σ<sub><em>ρ</em></sub> Li(<em>x<sup>ρ</sup></em>) − log 2 + ∫<sub><em>x</em></sub><sup>∞</sup> <span style="font-size:.9em">d<em>t</em> ⁄ <em>t</em>(<em>t</em>²−1) log <em>t</em></span></div>
+        <div class="row"><em>π</em>(<em>x</em>) = Σ<sub><em>n</em></sub> <em>μ</em>(<em>n</em>)⁄<em>n</em> · <em>J</em>(<em>x</em><sup>1/<em>n</em></sup>)</div>
+      </div>
+      <div class="group">
+        <div class="ctl">
+          <div class="top"><label for="sc-n">Zeros used, N</label><span class="val" id="sc-n-val">30</span></div>
+          <input type="range" id="sc-n" min="0" max="1000" step="1" value="500">
+          <div class="stat" id="sc-gamma"></div>
+        </div>
+        <div class="btns">
+          <button class="primary" id="sc-play">Play: add zeros</button>
+          <button id="sc-minus">− 1</button>
+          <button id="sc-plus">+ 1</button>
+          <button id="sc-zero">N = 0</button>
+        </div>
+      </div>
+      <div class="group">
+        <div class="label">Range of x</div>
+        <div class="chips" id="sc-ranges">
+          <button data-r="0,30">0–30</button>
+          <button data-r="0,100">0–100</button>
+          <button data-r="0,400">0–400</button>
+          <button data-r="0,2000">0–2000</button>
+          <button data-r="85,130">85–130</button>
+          <button data-r="1000,1100">1000–1100</button>
+        </div>
+        <div class="row2">
+          <label class="num">from<input type="number" id="sc-xmin" min="0" max="20000" step="1" value="0"></label>
+          <label class="num">to<input type="number" id="sc-xmax" min="5" max="20000" step="1" value="100"></label>
+        </div>
+        <div class="hint">Drag the plot to pan; scroll to zoom around the pointer.</div>
+      </div>
+      <div class="group">
+        <div class="label">Show</div>
+        <div class="chips" id="sc-mode">
+          <button data-m="pi" aria-pressed="true">π(x), primes</button>
+          <button data-m="J" aria-pressed="false">J(x), prime powers</button>
+        </div>
+        <label class="chk"><input type="checkbox" id="sc-smooth" checked> Smooth term (no zeros)</label>
+        <label class="chk"><input type="checkbox" id="sc-first" checked> First wave (γ₁ = 14.13) in lower panel</label>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ============ II. CRITICAL LINE ============ -->
+  <section class="view" id="v-critical-line" data-view="critical-line" hidden>
+    <div class="stage">
+      <div class="plot" id="cl-plot">
+        <canvas id="cl-main"></canvas>
+        <div class="tag" id="cl-tag">ζ(σ + it) in the w-plane</div>
+        <div class="readout" id="cl-readout"></div>
+      </div>
+      <div class="plot small" id="cl-gplot">
+        <canvas id="cl-graph"></canvas>
+        <div class="tag" id="cl-gtag">Z(t), real along the critical line</div>
+        <div class="legend" id="cl-glegend"></div>
+      </div>
+    </div>
+    <aside class="panel">
+      <h2>Walking up the critical strip</h2>
+      <p>Fix the real part <em>σ</em> and let <em>t</em> climb. The value ζ(<em>σ</em> + <em>it</em>) traces a curve in the plane. On the critical line <em>σ</em> = ½ every loop that passes through the origin is a zero. Slide <em>σ</em> away from ½ and the loops start to miss 0: the Riemann hypothesis says they always do.</p>
+      <div class="formula">
+        <div class="row"><em>Z</em>(<em>t</em>) = <em>e</em><sup><em>iθ</em>(<em>t</em>)</sup> ζ(½ + <em>it</em>) is real,</div>
+        <div class="row">so the zeros on the line are its sign changes.</div>
+      </div>
+      <div class="group">
+        <div class="ctl">
+          <div class="top"><label for="cl-sigma">Real part σ</label><span class="val" id="cl-sigma-val">0.50</span></div>
+          <input type="range" id="cl-sigma" min="-1" max="2.5" step="0.01" value="0.5">
+          <div class="chips" id="cl-sigmas">
+            <button data-s="0">0</button><button data-s="0.25">¼</button><button data-s="0.5">½</button><button data-s="0.75">¾</button><button data-s="1">1</button><button data-s="1.5">1.5</button><button data-s="2">2</button>
+          </div>
+        </div>
+        <div class="ctl">
+          <div class="top"><label for="cl-t0">Start height t₀</label><span class="val" id="cl-t0-val">0</span></div>
+          <input type="range" id="cl-t0" min="0" max="1000" step="0.5" value="0">
+        </div>
+        <div class="ctl">
+          <div class="top"><label for="cl-span">Window length</label><span class="val" id="cl-span-val">50</span></div>
+          <input type="range" id="cl-span" min="5" max="200" step="1" value="50">
+        </div>
+        <div class="ctl">
+          <div class="top"><label for="cl-speed">Tracing speed</label><span class="val" id="cl-speed-val">6 t/s</span></div>
+          <input type="range" id="cl-speed" min="1" max="40" step="1" value="6">
+        </div>
+        <div class="btns">
+          <button class="primary" id="cl-play">Trace from t₀</button>
+          <button id="cl-fit">Fit view</button>
+        </div>
+        <div class="hint">Drag or tap the lower graph to scrub t. Drag the curve to pan, scroll to zoom.</div>
+      </div>
+      <div class="group">
+        <div class="label">Show</div>
+        <label class="chk"><input type="checkbox" id="cl-colour" checked> Colour the curve by t</label>
+        <label class="chk"><input type="checkbox" id="cl-arm" checked> Arm from the origin</label>
+        <label class="chk"><input type="checkbox" id="cl-zeros" checked> Mark zeros passed</label>
+      </div>
+      <div class="stat" id="cl-stat"></div>
+    </aside>
+  </section>
+
+  <!-- ============ III. PLANE ============ -->
+  <section class="view" id="v-plane" data-view="plane" hidden>
+    <div class="stage">
+      <div class="plot" id="pl-plot">
+        <canvas id="pl-img"></canvas>
+        <canvas id="pl-over"></canvas>
+        <div class="tag">ζ(s) over the s-plane, domain colouring</div>
+        <div class="readout" id="pl-readout"></div>
+        <div class="busy" id="pl-busy"></div>
+      </div>
+    </div>
+    <aside class="panel">
+      <h2>ζ(s) on the whole plane</h2>
+      <p>Each point <em>s</em> is coloured by the value ζ(<em>s</em>). Hue is the argument: red is positive real, cyan negative real. Brightness is size, so zeros are dark points where every hue meets and the pole at <em>s</em> = 1 is the bright one. Each brightness band marks |ζ| doubling. Left of 0 the plane is reached by the functional equation.</p>
+      <div class="formula">
+        <div class="row">ζ(<em>s</em>) = 2<sup><em>s</em></sup><em>π</em><sup><em>s</em>−1</sup> sin(<em>πs</em>⁄2) Γ(1−<em>s</em>) ζ(1−<em>s</em>)</div>
+      </div>
+      <div class="colorwheel"><canvas id="pl-wheel" width="108" height="108"></canvas><span>Hue key: the argument of ζ(<em style="font-family:var(--display)">s</em>). Going round a zero anticlockwise, colours run red → yellow → green → cyan → blue → magenta.</span></div>
+      <div class="group">
+        <div class="label">Go to</div>
+        <div class="chips" id="pl-presets">
+          <button data-p="-5,12,40">Overview</button>
+          <button data-p="0.5,25,34">Critical strip</button>
+          <button data-p="-9,0,14">Trivial zeros</button>
+          <button data-p="1,0,3">Pole at s = 1</button>
+          <button data-p="0.5,100,16">Zeros near t = 100</button>
+          <button data-p="-30,30,80">Far left</button>
+        </div>
+        <div class="btns"><button id="pl-zin">Zoom in</button><button id="pl-zout">Zoom out</button></div>
+      </div>
+      <div class="group">
+        <div class="label">Colouring</div>
+        <select id="pl-mode" aria-label="Colouring mode">
+          <option value="0">Phase and modulus bands</option>
+          <option value="1">Phase only</option>
+          <option value="2">Modulus bands only (greyscale)</option>
+        </select>
+        <label class="chk"><input type="checkbox" id="pl-phase"> Phase lines every 30°</label>
+        <label class="chk"><input type="checkbox" id="pl-marks" checked> Mark zeros, pole and strip</label>
+        <label class="chk"><input type="checkbox" id="pl-line" checked> Show the path from view II</label>
+      </div>
+      <div class="stat" id="pl-stat"></div>
+    </aside>
+  </section>
+</div>
+
+<script id="core">
+// ---- zeta core (shared with workers) ----
+var LN2 = Math.log(2), LNPI = Math.log(Math.PI), LN2PI = Math.log(2 * Math.PI), EULER = 0.5772156649015329;
+var BC = [1/6/2, -1/30/24, 1/42/720, -1/30/40320, 5/66/3628800, -691/2730/479001600,
+  7/6/87178291200, -3617/510/20922789888000, 43867/798/6402373705728000, -174611/330/2432902008176640000];
+var LOGN = new Float64Array(4097); for (var _n = 1; _n <= 4096; _n++) LOGN[_n] = Math.log(_n);
+var _t = [0, 0], _g = [0, 0];
+// Euler–Maclaurin, valid for any s != 1 (used for Re s >= 0)
+function zetaEM(sr, si, out) {
+  var a = Math.sqrt(sr * sr + si * si);
+  var N = Math.min(4096, Math.max(8, Math.ceil(a * 0.35) + 6));
+  var re = 0, im = 0, n, l, m, ang;
+  for (n = 1; n < N; n++) { l = LOGN[n]; m = Math.exp(-sr * l); ang = -si * l; re += m * Math.cos(ang); im += m * Math.sin(ang); }
+  l = LOGN[N]; m = Math.exp(-sr * l); ang = -si * l;
+  var pr = m * Math.cos(ang), pi = m * Math.sin(ang);
+  var ar = N * pr, ai = N * pi, dr = sr - 1, di = si, dd = dr * dr + di * di;
+  re += (ar * dr + ai * di) / dd; im += (ai * dr - ar * di) / dd;
+  re += pr / 2; im += pi / 2;
+  var tr = (sr * pr - si * pi) / N, ti = (sr * pi + si * pr) / N, iN2 = 1 / (N * N);
+  for (var k = 0; k < 10; k++) {
+    re += BC[k] * tr; im += BC[k] * ti;
+    var ur = sr + 2 * k + 1, vr = sr + 2 * k + 2;
+    var qr = (ur * vr - si * si) * iN2, qi = si * (ur + vr) * iN2;
+    var nr = tr * qr - ti * qi; ti = tr * qi + ti * qr; tr = nr;
+  }
+  out[0] = re; out[1] = im;
+}
+// log Gamma for Re z > 0 (continuous branch)
+function lgammaC(zr, zi, out) {
+  var sr = 0, si = 0;
+  while (zr < 12) { sr += 0.5 * Math.log(zr * zr + zi * zi); si += Math.atan2(zi, zr); zr += 1; }
+  var lr = 0.5 * Math.log(zr * zr + zi * zi), li = Math.atan2(zi, zr);
+  // (z-1/2) log z - z + 0.5 log 2pi
+  var r = (zr - 0.5) * lr - zi * li - zr + 0.5 * LN2PI, i = (zr - 0.5) * li + zi * lr - zi;
+  // series 1/(12z) - 1/(360z^3) + 1/(1260z^5) - 1/(1680 z^7)
+  var d = zr * zr + zi * zi, wr = zr / d, wi = -zi / d; // 1/z
+  var w2r = wr * wr - wi * wi, w2i = 2 * wr * wi;
+  var cs = [1/12, -1/360, 1/1260, -1/1680], pr = wr, pi = wi;
+  for (var k = 0; k < 4; k++) { r += cs[k] * pr; i += cs[k] * pi; var nr = pr * w2r - pi * w2i; pi = pr * w2i + pi * w2r; pr = nr; }
+  out[0] = r - sr; out[1] = i - si;
+}
+// zeta(s) anywhere (s != 1)
+function zeta(sr, si, out) {
+  var neg = si < 0; if (neg) si = -si;
+  if (sr >= 0) { zetaEM(sr, si, out); }
+  else {
+    // zeta(s) = 2^s pi^(s-1) sin(pi s/2) Gamma(1-s) zeta(1-s)
+    zetaEM(1 - sr, -si, _t);
+    lgammaC(1 - sr, -si, _g);
+    var lr = sr * LN2 + (sr - 1) * LNPI + _g[0], li = si * LN2 + si * LNPI + _g[1];
+    var x = Math.PI * sr / 2, y = Math.PI * si / 2, sinr, sini;
+    if (y < 15) {
+      sinr = Math.sin(x) * Math.cosh(y); sini = Math.cos(x) * Math.sinh(y);
+    } else { // sin z = (i/2) e^{-iz}(1 - e^{2iz}),  -iz = y - ix
+      lr += y - LN2; li += Math.PI / 2 - x;
+      var e = Math.exp(-2 * y); sinr = 1 - e * Math.cos(2 * x); sini = -e * Math.sin(2 * x);
+    }
+    var m = Math.exp(lr), ar = m * Math.cos(li), ai = m * Math.sin(li);
+    var br = ar * sinr - ai * sini, bi = ar * sini + ai * sinr;
+    out[0] = br * _t[0] - bi * _t[1]; out[1] = br * _t[1] + bi * _t[0];
+  }
+  if (neg) out[1] = -out[1];
+}
+// Riemann–Siegel theta
+function theta(t) {
+  if (t > 30) { var it = 1 / t; return t / 2 * Math.log(t / (2 * Math.PI)) - t / 2 - Math.PI / 8 + it / 48 + 7 * it * it * it / 5760; }
+  lgammaC(0.25, t / 2, _g); return _g[1] - t / 2 * LNPI;
+}
+
+</script>
+<script id="app">
+"use strict";
+var ZEROS = [14.134725,21.022040,25.010858,30.424876,32.935062,37.586178,40.918719,43.327073,48.005151,49.773832,52.970321,56.446248,59.347044,60.831779,65.112544,67.079811,69.546402,72.067158,75.704691,77.144840,79.337375,82.910381,84.735493,87.425275,88.809111,92.491899,94.651344,95.870634,98.831194,101.317851,103.725538,105.446623,107.168611,111.029536,111.874659,114.320221,116.226680,118.790783,121.370125,122.946829,124.256819,127.516684,129.578704,131.087689,133.497737,134.756510,138.116042,139.736209,141.123707,143.111846,146.000982,147.422765,150.053520,150.925258,153.024694,156.112909,157.597592,158.849988,161.188964,163.030710,165.537069,167.184440,169.094515,169.911976,173.411537,174.754192,176.441434,178.377408,179.916484,182.207078,184.874468,185.598784,187.228923,189.416159,192.026656,193.079727,195.265397,196.876482,198.015310,201.264752,202.493595,204.189672,205.394697,207.906259,209.576510,211.690863,213.347919,214.547045,216.169539,219.067596,220.714919,221.430706,224.007000,224.983325,227.421444,229.337413,231.250189,231.987235,233.693404,236.524230,237.769820,239.555478,241.049158,242.823272,244.070898,247.136990,248.101990,249.573690,251.014948,253.069987,255.306256,256.380714,258.610439,259.874407,260.805085,263.573894,265.557852,266.614974,267.921915,269.970449,271.494056,273.459609,275.587493,276.452050,278.250744,279.229251,282.465115,283.211186,284.835964,286.667445,287.911921,289.579855,291.846291,293.558434,294.965370,295.573255,297.979277,299.840326,301.649325,302.696750,304.864371,305.728913,307.219496,310.109463,311.165142,312.427801,313.985286,315.475616,317.734806,318.853104,321.160134,322.144559,323.466970,324.862866,327.443901,329.033072,329.953240,331.474468,333.645379,334.211355,336.841850,338.339993,339.858217,341.042261,342.054878,344.661703,346.347871,347.272678,349.316261,350.408419,351.878649,353.488900,356.017575,357.151302,357.952685,359.743755,361.289362,363.331331,364.736024,366.212710,367.993575,368.968438,370.050919,373.061928,373.864874,375.825913,376.324092,378.436680,379.872975,381.484469,383.443529,384.956117,385.861301,387.222890,388.846128,391.456084,392.245083,393.427744,395.582870,396.381854,397.918736,399.985120,401.839229,402.861918,404.236442,405.134387,407.581460,408.947246,410.513869,411.972268,413.262736,415.018810,415.455215,418.387706,419.861365,420.643828,422.076710,423.716580,425.069882,427.208825,428.127914,430.328745,431.301307,432.138642,433.889218,436.161006,437.581698,438.621739,439.918442,441.683199,442.904546,444.319336,446.860623,447.441704,449.148546,450.126946,451.403308,453.986738,454.974684,456.328427,457.903893,459.513415,460.087944,462.065367,464.057287,465.671539,466.570287,467.439046,469.536005,470.773655,472.799175,473.835232,475.600339,476.769015,478.075264,478.942182,481.830339,482.834783,483.851427,485.539148,486.528718,488.380567,489.661762,491.398822,493.314442,493.957998,495.358829,496.429696,498.580782,500.309085,501.604447,502.276270,504.499773,505.415232,506.464153,508.800700,510.264228,511.562290,512.623145,513.668986,515.435057,517.589669,518.234223,520.106310,521.525193,522.456696,523.960531,525.077386,527.903642,528.406214,529.806226,530.866918,532.688183,533.779631,535.664314,537.069759,538.428526,540.213166,540.631390,541.847437,544.323890,545.636833,547.010912,547.931613,549.497568,550.970010,552.049572,553.764972,555.792021,556.899476,557.564659,559.316237,560.240807,562.559208,564.160879,564.506056,566.698788,567.731758,568.923955,570.051115,572.419984,573.614611,575.093886,575.807247,577.039003,579.098835,580.136959,581.946576,583.236088,584.561706,585.984563,586.742772,588.139663,590.660398,591.725858,592.571358,593.974715,595.728154,596.362768,598.493077,599.545640,601.602137,602.579168,603.625619,604.616218,606.383460,608.413217,609.389575,610.839163,611.774210,613.599779,614.646238,615.538563,618.112831,619.184483,620.272894,621.709295,622.375003,624.269900,626.019283,627.268397,628.325862,630.473887,630.805781,632.225141,633.546858,635.523800,637.397193,637.925514,638.927938,640.694795,641.945500,643.278884,644.990578,646.348192,647.761753,648.786401,650.197519,650.668684,653.649572,654.301921,655.709463,656.964085,658.175614,659.663846,660.716733,662.296586,664.244605,665.342763,666.515148,667.148495,668.975849,670.323585,672.458184,673.043578,674.355898,676.139674,677.230181,677.800445,679.742198,681.894992,682.602735,684.013550,684.972630,686.163224,687.961543,689.368941,690.474735,692.451684,693.176970,694.533909,695.726336,696.626070,699.132095,700.296739,701.301743,702.227343,704.033839,705.125814,706.184655,708.269071,709.229589,711.130274,711.900290,712.749383,714.082772,716.112396,717.482570,718.742787,719.697101,721.351162,722.277505,723.845821,724.562614,727.056403,728.405482,728.758750,730.416482,731.417355,732.818053,734.789643,735.765459,737.052929,738.580421,739.909524,740.573807,741.757336,743.895013,745.344990,746.499306,747.674564,748.242754,750.655950,750.966381,752.887622,754.322370,755.839309,756.768248,758.101729,758.900238,760.282367,762.700033,763.593066,764.307523,766.087540,767.218472,768.281462,769.693407,771.070839,772.961618,774.117745,775.047847,775.999712,777.299749,779.157077,780.348925,782.137664,782.597944,784.288823,785.739090,786.461147,787.468464,790.059092,790.831620,792.427708,792.888653,794.483792,795.606596,797.263470,798.707570,799.654336,801.604246,802.541985,803.243096,804.762239,805.861636,808.151815,809.197783,810.081805,811.184359,812.771108,814.045914,814.870540,816.727738,818.380669,819.204642,820.721898,821.713454,822.197757,824.526294,826.039287,826.905811,828.340174,829.437011,830.895884,831.799778,833.003641,834.651915,836.693576,837.347335,838.249022,839.465395,841.036390,842.041354,844.166197,844.805994,846.194770,847.971718,848.489281,849.862274,850.645448,853.163113,854.095512,855.286710,856.484117,857.310741,858.904026,860.410671,861.171098,863.189720,864.340824,865.594664,866.423740,867.693123,868.670494,870.846902,872.188751,873.098979,873.908389,875.985285,876.600826,877.654698,879.380952,880.834649,882.386697,883.430332,884.198743,885.272304,886.852802,888.475567,889.735294,890.813132,892.386433,893.119118,894.886292,895.397920,896.632252,899.221523,899.858885,900.849740,902.243208,903.099674,904.702903,905.829941,907.656729,908.333544,910.186334,911.234951,912.331046,912.823999,914.730097,916.355001,917.825378,918.836535,919.448344,921.156396,922.500629,923.285720,924.773484,926.551553,927.850859,928.663659,929.874093,931.009211,931.852741,934.385307,934.995425,936.228649,937.532926,939.024301,939.660941,941.157000,942.052342,944.188036,945.333563,946.765842,947.079183,948.346646,950.151613,951.033249,952.727989,954.129719,954.829309,956.675479,957.510053,958.414593,959.459169,961.669572,963.182087,963.567040,965.055580,966.110755,967.371154,968.636302,970.125611,971.071491,973.185361,973.873079,974.774635,976.178502,976.917202,978.766672,980.578001,981.288615,982.396485,983.575076,985.186929,986.130515,986.756008,988.992622,990.223918,991.374294,992.728696,993.214581,994.404591,996.205336,997.511935,998.827547,999.791572,1001.349483,1002.404305,1003.267808,1004.675044,1005.543420,1008.006704,1008.795710,1009.806591,1010.569757,1012.410043,1013.058638,1014.689633,1016.060179,1017.266402,1018.605573,1019.912440,1020.917475,1021.544344,1022.885271,1025.265724,1025.707944,1027.467694,1028.128964,1029.227297,1030.897369,1031.833180,1032.812883,1034.612916,1036.195917,1037.024708,1038.087752,1039.077401,1040.264038,1041.621528,1043.623954,1044.514976,1045.107042,1047.089817,1047.987147,1048.953785,1049.996284,1051.576572,1053.245785,1054.781039,1055.002146,1056.688847,1057.100044,1059.133769,1060.139519,1061.501304,1062.915382,1064.071551,1065.121855,1066.463223,1067.418860,1067.990000,1070.535042,1071.618623,1072.543998,1073.570353,1074.747771,1076.266626,1076.924056,1078.647198,1079.809965,1081.171002,1082.952750,1083.295467,1084.183264,1085.647831,1086.911999,1088.755725,1089.795338,1090.863191,1091.728473,1093.440873,1094.284458,1095.433085,1096.401918,1098.841015,1099.360667,1100.574461,1101.839111,1102.551780,1103.732297,1105.617189,1106.774372,1107.774532,1109.158919,1110.444143,1111.443505,1112.432995,1113.397595,1115.065359,1116.787254,1117.965920,1118.684135,1119.473247,1121.155938,1122.458621,1123.101117,1125.314729,1125.763442,1127.658024,1128.430225,1129.728997,1130.391598,1131.495086,1133.708626,1134.885655,1135.562214,1136.929293,1138.151590,1138.992342,1140.721848,1141.261023,1142.858660,1144.782300,1145.485328,1146.576815,1147.501777,1148.615277,1149.982601,1151.562815,1152.943129,1153.890304,1154.697520,1156.621568,1157.432315,1158.001609,1159.480657,1161.396645,1162.487529,1163.701032,1164.737586,1165.271228,1166.943613,1168.086272,1169.698357,1170.463639,1172.120682,1173.305688,1174.232767,1175.215452,1176.632876,1177.106304,1179.701224,1180.653544,1181.267318,1182.582270,1183.712775,1185.155843,1185.875359,1187.345161,1188.856444,1189.963636,1191.482606,1192.218611,1193.324021,1193.857427,1196.034672,1197.071787,1198.686569,1199.356514,1200.532692,1201.810335,1203.137351,1203.855248,1204.985492,1206.870500,1208.471460,1208.989484,1209.898030,1211.416116,1212.113153,1213.598373,1215.389975,1216.183722,1217.174482,1219.050028,1219.614471,1220.816348,1221.692242,1222.952484,1225.018330,1225.855021,1227.231828,1227.917142,1228.793154,1230.584603,1231.562274,1232.529587,1234.277817,1235.502549,1236.399017,1237.977299,1238.457233,1239.490807,1240.813472,1243.078076,1243.538147,1244.851434,1245.655866,1247.372562,1248.063061,1249.159888,1250.672397,1251.659832,1253.673578,1254.431328,1255.408231,1256.181214,1257.541219,1258.779233,1260.344548,1261.611717,1262.556614,1263.676733,1264.957223,1266.179038,1267.200346,1267.570572,1270.118922,1271.134300,1272.083960,1273.261145,1274.196221,1275.092030,1276.842172,1277.763092,1279.332843,1280.155794,1281.828727,1283.000491,1283.335032,1284.854795,1285.695023,1287.410027,1289.165352,1290.104772,1290.417708,1291.945871,1293.493982,1294.118474,1295.365364,1296.801111,1298.256527,1299.405171,1300.490019,1301.495517,1302.346742,1303.273200,1305.401672,1306.508393,1307.267242,1308.988197,1309.421532,1311.056571,1311.966941,1313.031599,1314.052566,1316.212113,1317.072986,1318.171279,1318.947881,1319.931083,1321.628139,1322.258067,1324.224979,1325.237624,1325.981970,1327.635281,1329.043518,1329.205019,1330.429937,1331.827591,1333.673523,1334.747329,1335.694975,1336.690185,1337.688792,1338.923165,1340.426400,1341.166272,1342.608508,1344.156044,1345.477106,1345.731413,1347.519472,1348.017238,1349.085194,1351.296206,1352.210465,1353.483338,1353.886782,1355.680595,1356.605656,1357.771743,1358.460160,1360.393145,1361.393075,1363.022329,1363.879191,1364.576585,1365.493734,1367.104091,1368.330193,1369.686949,1370.973523,1371.686554,1373.202915,1374.154799,1375.302392,1376.161780,1377.177634,1379.683283,1380.148578,1381.073977,1382.345663,1383.297591,1384.444416,1385.663777,1387.326648,1387.921454,1389.565832,1390.705490,1391.853200,1392.644028,1393.433402,1394.884185,1396.544163,1397.834623,1398.837675,1399.839473,1400.426946,1402.564347,1402.973748,1404.006292,1405.666975,1407.085143,1408.136307,1409.320681,1410.024811,1411.257057,1411.965653,1413.843149,1415.585785,1415.781581,1417.102823,1418.696964,1419.422481,1420.416526,1421.850567,1422.461311,1424.463046,1425.873469,1426.645980,1427.365671,1428.592306,1429.650477,1431.218314,1432.049741,1433.821941,1434.584942,1435.692907,1437.226722,1438.006285,1438.949553,1439.622793,1441.960988,1442.911060,1444.041931,1445.072278,1445.830085,1447.226227,1448.323854,1449.488771,1450.773562,1451.835298,1453.737597,1454.226011,1455.312091,1456.167798,1457.539002,1458.393777,1460.688271,1461.245443,1462.266123,1463.286891,1464.696903,1465.889558,1466.505621,1467.703990,1469.347650,1470.966589,1471.388765,1473.020132,1473.745649,1474.203222,1476.092127,1477.435191,1478.441396,1479.759919,1480.766879,1481.964684,1483.032960,1484.143581,1484.817883,1486.171349,1488.116338,1489.252467,1489.970892,1490.670694,1492.180091,1493.330835,1494.155369,1495.768833,1497.065506,1497.747361,1499.640825,1500.351952,1501.119325,1502.346063,1503.090933,1505.261530,1506.152986,1507.407505,1508.253031,1509.280419,1510.391797,1511.923005,1512.589765,1513.589766,1515.708344,1516.435990,1517.719806,1518.414791,1519.741009,1520.273622,1521.901909,1523.486047,1524.724892,1525.227837,1526.552312,1528.040930,1529.034457,1529.369975,1531.020743,1532.222327,1533.886978,1535.042277,1535.769502,1536.620702,1537.651062,1539.302855,1540.030270,1541.742249,1542.496523,1544.118670,1544.834608,1546.091198,1547.297581,1547.806564,1548.871348,1551.273845,1552.006873,1552.736105,1554.156519,1554.921285,1556.162987,1557.394507,1558.339153,1559.781154,1560.876476,1562.410153,1563.385401,1564.177940,1564.915788,1566.266416,1567.623451,1569.022478,1570.509278,1571.045381,1571.845352,1573.806563,1574.230915,1575.638155,1576.161352,1578.118827,1579.514055,1580.372082,1581.363552,1582.329487,1583.394693,1584.234848,1586.293211,1587.004342,1588.163404,1589.357946,1590.835904,1591.293884,1592.637167,1593.584808,1594.442690,1596.484492,1597.715896,1598.420799,1599.619349,1600.048045,1601.911946,1602.815405,1603.655203,1605.521647,1606.293418,1607.556905,1608.836295,1610.003264,1610.253823,1611.437141,1613.078855,1614.710628,1615.574609,1616.398395,1617.734685,1618.537518,1619.952501,1620.774311,1622.098752,1622.977768,1625.021857,1625.987020,1626.399919,1627.755441,1628.715317,1629.658669,1631.194815,1632.798184,1633.512517,1634.516823,1635.718366,1637.089190,1637.994644,1638.599658,1639.821236,1641.899819,1642.489780,1644.152066,1644.713746,1645.573760,1646.624867,1648.270598,1649.118535,1650.416989,1651.732693,1652.671066,1654.205897,1654.726652,1655.822776,1657.114236,1657.567101,1660.019980,1660.860057,1661.836893,1662.377203,1664.057265,1664.968004,1665.877640,1667.241125,1668.368229,1669.669728,1671.047182,1671.984259,1672.963371,1673.687445,1674.648462,1676.362486,1677.691227,1678.630368,1680.077947,1680.504770,1681.812320,1683.273289,1684.171657,1684.558863,1686.421122,1688.080143,1688.933869,1689.703154,1691.051560,1691.515193,1693.053021,1694.017565,1695.832554,1696.654997,1697.342514,1699.229547,1699.966817,1700.820303,1701.825551,1702.923250,1704.291412,1706.256032,1706.615665,1707.912312,1708.512116,1709.780842,1711.137603,1712.155398,1713.055342,1714.717145,1715.825283,1716.769984,1717.974485,1718.954152,1719.724469,1720.498071,1722.844662,1723.532823,1724.733959,1725.638628,1726.605701,1728.166507,1728.644486,1730.023873,1731.014194,1732.430170,1733.840825,1735.175466,1735.624715,1736.305663,1737.893885,1738.783238,1740.169116,1741.779168,1742.467681,1743.426437,1744.721512,1746.097499,1746.595457,1747.781696,1748.563987,1750.822818,1751.617795,1752.511511,1753.661355,1754.763370,1755.169694,1757.046518,1757.984077,1759.240086,1760.215166,1761.854900,1762.497689,1763.719121,1764.591477,1765.400494,1766.676244,1768.295971,1769.940952,1770.243677,1771.212945,1772.328000,1773.894916,1774.660431,1775.341988,1777.255860,1778.041735,1779.552271,1780.665228,1781.355638,1782.439067,1783.084830,1784.607946,1786.342201,1787.049273,1788.215123,1789.242180,1790.449562,1791.254410,1792.616103,1793.525391,1794.178482,1796.465141,1797.376336,1798.147067,1799.231647,1800.024724,1801.309637,1802.301283,1803.796844,1804.904161,1806.289667,1806.578392,1808.714432,1809.119274,1810.108893,1810.873719,1812.420077,1814.024140,1814.973082,1816.338611,1816.758023,1817.710609,1819.260334,1820.187882,1821.305708,1822.427671,1823.766266,1825.213677,1825.915684,1826.795455,1828.211270,1828.621092,1829.832530,1831.936380,1832.984940,1833.273239,1834.721560,1835.883754,1836.827673,1838.086943,1838.640289,1840.195563,1841.478583,1842.875955,1843.771058,1844.759044,1845.417534,1846.353253,1848.330981,1848.722761,1850.601184,1851.400362,1852.342205,1853.519343,1854.855632,1855.592935,1856.389179,1857.498075,1859.495272,1860.541388,1861.379672,1862.121465,1863.425465,1864.353981,1865.367434,1866.836547,1868.085191,1868.706746,1870.421472,1871.416043,1872.441566,1872.865668,1874.508361,1874.913774,1877.095064,1878.022251,1879.153303,1880.082325,1880.611766,1882.321975,1883.408724,1884.005778,1885.198075,1887.053895,1887.808841,1888.938183,1890.348129,1890.612129,1891.678511,1892.867701,1894.558538,1895.697156,1896.585494,1897.513693,1898.829373,1900.006145,1900.571884,1901.891306,1902.805059,1904.089325,1906.102756,1906.597678,1907.332780,1908.433063,1909.465930,1910.733660,1911.704691,1913.182490,1914.352300,1915.054629,1916.606372,1917.344704,1918.786499,1919.207778,1919.937457,1922.101626,1923.280838,1924.055831,1925.231988,1926.211583,1926.820093,1928.417519,1929.487560,1930.258387,1931.760069,1932.875755,1934.416436,1934.907943,1935.924849,1936.873094,1937.968633,1939.050029,1940.977327,1941.822862,1942.633569,1943.367947,1945.153796,1945.922717,1946.609945,1947.917048,1949.030030,1950.743202,1951.536696,1952.850129,1953.448556,1954.418588,1955.315809,1956.848165,1958.314404,1958.851883,1960.418845,1961.359278,1962.233572,1963.621185,1964.357391,1965.377830,1966.117659,1968.471602,1969.047618,1970.305010,1970.855548,1971.970313,1973.182663,1974.347202,1975.080610,1977.173944,1977.271446,1978.801448,1980.371772,1980.910043,1981.748769,1982.663279,1983.923805,1985.416540,1986.757108,1987.873473,1988.251877,1989.702003,1990.478353,1992.001706,1992.784988,1993.577493,1995.168740,1996.796177,1997.390914,1998.279007,1999.545764,2000.434515,2000.929621,2002.896408,2004.139669,2005.077848,2005.900935,2007.125180,2008.418240,2009.176634,2010.153325,2011.020705,2012.538935,2013.872098,2015.186729,2016.029638,2016.800076,2017.386767,2019.264600,2019.884367,2021.196043,2022.545618,2023.572912,2024.488262,2025.878906,2026.738259,2027.573317,2028.582459,2029.385480,2031.750551,2032.420781,2033.017893,2034.554829,2035.077440,2036.527526,2037.217111,2038.841738,2039.443219,2040.839120,2042.344586,2043.217117,2044.121593,2045.037321,2045.802760,2047.098336,2048.454094,2049.847526,2050.906055,2051.718388,2052.407790,2054.059917,2055.180267,2055.572603,2056.620867,2058.450651,2059.448022,2060.868247,2061.367059,2062.572651,2063.283559,2064.304868,2065.832672,2066.985229,2068.345639,2068.669941,2070.504718,2071.377083,2071.990455,2073.397604,2074.171065,2075.028066,2077.117570,2078.155485,2078.939288,2079.567628,2080.910343,2081.799687,2083.300277,2083.779993,2085.389814,2086.580319,2087.473341,2088.712281,2090.036207,2090.447550,2091.221581,2092.473218,2094.335917,2095.138257,2096.346530,2097.371606,2097.951922,2099.311651,2100.593745,2101.135489,2102.535100,2103.390455,2105.372207,2105.994704,2107.172362,2107.617911,2108.938385,2109.963143,2110.822372,2112.907088,2113.483966,2114.396137,2115.506603,2116.900056,2117.722399,2118.618646,2119.456428,2120.691563,2122.465151,2123.344042,2124.370369,2125.512400,2125.958785,2126.975711,2128.752291,2129.406080,2130.555102,2132.080621,2132.798516,2134.154934,2134.950773,2136.086898,2136.967471,2137.509941,2139.380760,2140.949363,2141.710036,2142.355043,2143.374444,2144.895337,2145.505754,2146.625894,2147.785367,2149.151849,2149.910640,2151.776885,2152.390227,2153.011964,2154.263624,2154.935346,2156.394727,2157.856490,2158.878072,2159.902286,2160.853062,2161.692172,2163.107122,2164.049720,2165.011437,2165.503949,2167.693444,2168.890616,2169.263829,2170.787075,2171.396362,2172.250963,2173.528297,2174.745021,2176.204119,2176.939452,2178.004209,2179.232185,2180.495318,2181.252367,2181.725783,2183.330584,2184.103191,2185.965528,2187.085691,2187.798456,2188.558763,2189.497073,2191.093363,2191.778017,2192.826771,2194.231530,2195.231688,2196.715978,2197.258747,2198.687513,2199.302965,2200.351021,2200.915953,2203.277454,2203.906365,2204.997802,2205.855761,2207.172162,2207.802741,2209.153744,2210.208015,2210.850941,2212.343568,2213.700256,2214.949926,2215.820566,2216.296376,2217.469375,2218.521007,2219.799816,2220.852159,2222.636605,2223.055058,2223.777773,2225.564645,2226.332734,2227.246229,2227.970574,2229.127959,2230.898691,2231.977154,2232.924854,2233.720222,2234.814935,2235.546662,2236.773644,2238.154800,2239.167744,2240.021209,2241.536187,2242.621180,2243.373668,2244.370702,2245.565287,2246.016558,2247.364431,2249.550199,2249.770767,2251.046642,2251.845318,2252.678433,2254.562247,2254.759079,2255.824566,2257.346385,2258.501847,2259.517842,2260.890259,2261.660064,2262.674431,2262.878305,2264.676400,2265.768446,2267.384501,2267.879175,2269.226998,2269.919103,2271.326282,2272.049016,2273.347534,2273.956289,2275.068665,2277.079318,2278.012628,2278.525942,2279.507306,2280.870720,2281.356484,2282.690375,2284.056011,2285.222242,2286.149814,2287.046159,2288.578849,2289.336285,2290.241458,2291.097664,2291.928901,2293.896145,2294.687918,2296.115091,2296.998522,2297.372648,2298.612363,2299.961578,2301.234126,2301.454840,2303.295482,2304.305139,2305.508357,2306.517733,2307.355553,2308.210285,2309.370358,2309.931122,2312.047996,2313.190914,2313.689360,2314.621182,2316.049455,2316.962495,2317.851532,2318.826035,2320.088523,2320.949532,2322.812633,2323.534274,2324.512455,2325.557096,2325.903016,2327.376856,2328.634875,2329.705723,2331.013110,2331.942708,2332.987765,2333.720863,2335.531713,2335.867154,2336.621037,2337.761730,2339.615684,2340.826727,2341.324596,2342.654042,2343.259159,2344.311216,2345.570484,2346.464120,2347.934255,2348.843424,2349.730054,2351.455047,2352.195702,2352.750870,2353.912136,2354.951081,2355.810814,2357.608316,2358.904705,2359.434859,2360.314285,2361.342542,2362.718318,2363.495618,2364.751176,2365.191515,2367.249220,2367.957702,2369.220578,2370.093390,2371.100748,2371.938138,2372.440347,2374.444231,2375.543967,2376.355464,2377.755408,2378.212962,2379.726503,2380.545657,2381.500124,2382.530831,2383.356014,2384.965072,2386.430937,2387.299084,2387.813569,2388.748208,2389.955988,2391.260550,2391.754982,2393.630593,2394.485368,2395.270170,2396.603879,2397.791644,2398.558311,2399.433833,2400.152357,2401.482998,2403.418798,2403.975315,2404.921593,2406.253989,2406.732851,2407.715910,2409.441502,2409.881603,2411.126193,2412.222936,2413.976123,2414.379880,2415.576893,2416.534055,2417.278087,2418.229443,2419.507917,2421.142944,2422.152085,2422.996230,2423.504147,2425.124760,2426.193438,2426.907064,2427.640897,2429.185596,2430.265813,2431.611135,2432.727569,2433.705897,2433.916873,2435.348894,2436.191600,2437.794076,2438.671791,2439.927127,2440.826160,2441.929837,2443.033560,2443.775436,2445.154381,2445.744952,2446.398523,2448.988312,2449.231032,2450.503651,2451.181708,2452.283366,2453.257486,2454.300562,2455.482288,2456.514552,2457.907999,2458.546800,2460.013579,2461.202295,2461.731629,2462.464295,2463.569667,2464.927816,2466.183097,2467.640861,2468.186816,2469.336264,2469.781485,2471.539298,2472.336418,2473.107125,2474.237850,2475.539354,2477.021755,2478.014854,2478.397598,2479.977352,2480.433607,2481.356767,2482.683412,2484.503238,2485.087591,2485.785621,2487.333836,2488.113832,2489.261157,2490.051091,2491.105516,2491.907474,2493.489295,2494.866178,2495.846840,2496.485337,2497.648465,2497.969974,2499.862043,2500.564386,2501.577745,2503.185227,2504.008934,2504.772153,2506.305352,2507.151886,2507.871040,2508.766046,2509.652997,2511.660190,2512.538221,2513.579517,2514.259859,2515.286483];
+// Re Ei(z) for Im z > 0
+function reEi(zr, zi) {
+  var d = zr * zr + zi * zi;
+  if (d > 400) {
+    var wr = zr / d, wi = -zi / d, sr = 1, si = 0, tr = 1, ti = 0, prev = 1e300;
+    for (var k = 1; k < 60; k++) {
+      var nr = (tr * wr - ti * wi) * k, ni = (tr * wi + ti * wr) * k;
+      var mag = Math.abs(nr) + Math.abs(ni); if (mag > prev) break; prev = mag;
+      tr = nr; ti = ni; sr += tr; si += ti; if (mag < 1e-7) break;
+    }
+    var ez = Math.exp(zr), er = ez * Math.cos(zi), ei = ez * Math.sin(zi);
+    var pr = er * wr - ei * wi, pi = er * wi + ei * wr;
+    return pr * sr - pi * si;
+  }
+  // series: gamma + log z + sum z^k/(k k!)
+  var r = EULER + 0.5 * Math.log(d), tr2 = 1, ti2 = 0;
+  for (var k2 = 1; k2 < 200; k2++) {
+    var a = (tr2 * zr - ti2 * zi) / k2, b = (tr2 * zi + ti2 * zr) / k2; tr2 = a; ti2 = b;
+    r += tr2 / k2; if (Math.abs(tr2) + Math.abs(ti2) < 1e-17 * (1 + Math.abs(r))) break;
+  }
+  return r;
+}
+function liReal(y) { // Li(y) = Ei(ln y), y > 1
+  var u = Math.log(y), r = EULER + Math.log(u), t = 1;
+  for (var k = 1; k < 300; k++) { t *= u / k; r += t / k; if (t < 1e-17 * r) break; }
+  return r;
+}
+function E1real(x) { // x > 0
+  if (x < 1) { var r = -EULER - Math.log(x), t = 1; for (var k = 1; k < 100; k++) { t *= -x / k; r -= t / k; if (Math.abs(t) < 1e-17) break; } return r; }
+  var b = x + 1, c = 1e300, d = 1 / b, h = d;
+  for (var i = 1; i < 200; i++) { var an = -i * i; b += 2; d = 1 / (an * d + b); c = b + an / c; var del = c * d; h *= del; if (Math.abs(del - 1) < 1e-15) break; }
+  return h * Math.exp(-x);
+}
+function tailInt(y) { var u = Math.log(y), s = 0; for (var k = 1; k < 200; k++) { var e = E1real(2 * k * u); s += e; if (e < 1e-14) break; } return s; }
+// wave of zero gamma at y: -2 Re Li(y^rho)
+function wave(g, u) { return -2 * reEi(0.5 * u, g * u); }
+
+/* ---------- shared helpers ---------- */
+var CSS = getComputedStyle(document.documentElement);
+function tok(n) { return CSS.getPropertyValue(n).trim(); }
+var COL = { ink: tok('--ink'), slate: tok('--slate'), rule: tok('--rule'), chalk: tok('--chalk'), dim: tok('--dim'), amber: tok('--amber'), cyan: tok('--cyan'), rose: tok('--rose') };
+var MONO = '11px "IBM Plex Mono", ui-monospace, Menlo, monospace';
+var $ = function (id) { return document.getElementById(id); };
+var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function fitCanvas(cv) {
+  var dpr = Math.min(2, window.devicePixelRatio || 1);
+  var w = Math.max(10, cv.clientWidth), h = Math.max(10, cv.clientHeight);
+  var W = Math.round(w * dpr), H = Math.round(h * dpr);
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx: ctx, w: w, h: h, dpr: dpr };
+}
+function ticks(a, b, n) {
+  var span = b - a; if (!(span > 0)) return [];
+  var raw = span / n, step = Math.pow(10, Math.floor(Math.log10(raw))), r = raw / step;
+  step *= r < 1.5 ? 1 : r < 3.5 ? 2 : r < 7.5 ? 5 : 10;
+  var out = [], v0 = Math.ceil(a / step) * step;
+  for (var v = v0; v <= b + 1e-9 * step; v += step) out.push(Math.abs(v) < step * 1e-9 ? 0 : v);
+  return out;
+}
+function fmtTick(v) { var a = Math.abs(v); if (a >= 1e5 || (a < 1e-3 && a > 0)) return v.toExponential(0); return String(+v.toPrecision(6)); }
+function fmt(v, d) { if (!isFinite(v)) return '∞'; var a = Math.abs(v); if (a >= 1e6 || (a < 1e-4 && a > 0)) return v.toExponential(3); return v.toFixed(d); }
+function fmtC(re, im, d) { return fmt(re, d) + (im < 0 ? ' − ' : ' + ') + fmt(Math.abs(im), d) + 'i'; }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function axesFrame(ctx, x0, x1, y0, y1, L, T, R, B, w, h, nx, ny, xlab) {
+  var X = function (x) { return L + (x - x0) / (x1 - x0) * (w - L - R); };
+  var Y = function (y) { return h - B - (y - y0) / (y1 - y0) * (h - T - B); };
+  ctx.font = MONO; ctx.lineWidth = 1;
+  var tx = ticks(x0, x1, nx), ty = ticks(y0, y1, ny);
+  ctx.strokeStyle = COL.rule; ctx.beginPath();
+  tx.forEach(function (v) { var p = Math.round(X(v)) + 0.5; ctx.moveTo(p, T); ctx.lineTo(p, h - B); });
+  ty.forEach(function (v) { var p = Math.round(Y(v)) + 0.5; ctx.moveTo(L, p); ctx.lineTo(w - R, p); });
+  ctx.stroke();
+  ctx.fillStyle = COL.dim; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  tx.forEach(function (v) { ctx.fillText(fmtTick(v), X(v), h - B + 5); });
+  if (xlab) { ctx.textAlign = 'right'; ctx.fillText(xlab, w - R, h - B + 5); }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  ty.forEach(function (v) { ctx.fillText(fmtTick(v), L - 6, Y(v)); });
+  return { X: X, Y: Y };
+}
+
+/* ======================================================================
+   I. PRIME STAIRCASE
+   ====================================================================== */
+var MU = (function () { var m = new Int8Array(64); for (var n = 1; n < 64; n++) { var k = n, r = 1, ok = true; for (var p = 2; p * p <= k; p++) { if (k % p === 0) { k /= p; if (k % p === 0) { ok = false; break; } r = -r; } } if (!ok) { m[n] = 0; continue; } if (k > 1) r = -r; m[n] = r; } return m; })();
+var SIEVE_MAX = 20001;
+var PRIMES = (function () { var s = new Uint8Array(SIEVE_MAX + 1), out = []; for (var i = 2; i <= SIEVE_MAX; i++) { if (!s[i]) { out.push(i); for (var j = i * i; j <= SIEVE_MAX; j += i) s[j] = 1; } } return out; })();
+var PRIME_POWERS = (function () { var out = []; PRIMES.forEach(function (p) { var q = p, k = 1; while (q <= SIEVE_MAX) { out.push([q, 1 / k]); q *= p; k++; } }); out.sort(function (a, b) { return a[0] - b[0]; }); return out; })();
+function piTrue(x) { var lo = 0, hi = PRIMES.length; while (lo < hi) { var m = (lo + hi) >> 1; if (PRIMES[m] <= x) lo = m + 1; else hi = m; } return lo; }
+function JTrue(x) { var s = 0; for (var i = 0; i < PRIME_POWERS.length && PRIME_POWERS[i][0] <= x; i++) s += PRIME_POWERS[i][1]; return s; }
+function smoothJ(y) { return liReal(y) - Math.LN2 + tailInt(y); }
+var YCUT = 1.3;
+function ramp(y) { var t = clamp((y - YCUT) / 0.3, 0, 1); return t * t * (3 - 2 * t); }
+
+var SC = {
+  xmin: 0, xmax: 100, N: 30, mode: 'pi', smooth: true, first: true,
+  xs: null, ux: null, sm1: null, osc1: null,  // n = 1 grid
+  ys: null, uy: null, smY: null, oscY: null, ylo: 0, yhi: 0, // grid for y = x^(1/n), n >= 2
+  done: 0, gridKey: '', playing: false, raf: 0, hoverX: null
+};
+function sliderToN(v) { return v <= 0 ? 0 : Math.round(Math.pow(ZEROS.length, v / 1000)) ; }
+function nToSlider(n) { return n <= 0 ? 0 : Math.round(1000 * Math.log(n) / Math.log(ZEROS.length)); }
+
+function scBuildGrid(width) {
+  var key = SC.xmin + '|' + SC.xmax + '|' + SC.mode + '|' + width;
+  if (key === SC.gridKey) return;
+  SC.gridKey = key;
+  var a = Math.max(SC.xmin, YCUT + 1e-6), b = SC.xmax;
+  var n1 = Math.max(200, Math.min(3200, Math.round(width * 2)));
+  SC.xs = new Float64Array(n1); SC.ux = new Float64Array(n1); SC.sm1 = new Float64Array(n1); SC.osc1 = new Float64Array(n1);
+  for (var j = 0; j < n1; j++) { var x = a + (b - a) * j / (n1 - 1); SC.xs[j] = x; SC.ux[j] = Math.log(x); SC.sm1[j] = smoothJ(x); }
+  if (SC.mode === 'pi' && Math.sqrt(b) > YCUT) {
+    var lo = Math.log(YCUT), hi = Math.log(Math.max(YCUT * 1.01, Math.sqrt(b)));
+    var n2 = Math.max(400, Math.min(4000, Math.round((hi - lo) * 900)));
+    SC.ylo = lo; SC.yhi = hi;
+    SC.ys = new Float64Array(n2); SC.uy = new Float64Array(n2); SC.smY = new Float64Array(n2); SC.oscY = new Float64Array(n2);
+    for (var i = 0; i < n2; i++) { var u = lo + (hi - lo) * i / (n2 - 1); SC.uy[i] = u; SC.ys[i] = Math.exp(u); SC.smY[i] = smoothJ(SC.ys[i]); }
+  } else { SC.ys = null; }
+  SC.done = 0;
+}
+function scAddZero(k, sign) {
+  var g = ZEROS[k], j, xs = SC.ux, o = SC.osc1;
+  for (j = 0; j < xs.length; j++) o[j] += sign * wave(g, xs[j]);
+  if (SC.ys) { var uy = SC.uy, oy = SC.oscY; for (j = 0; j < uy.length; j++) oy[j] += sign * wave(g, uy[j]); }
+}
+function interpY(arr, y) {
+  var u = Math.log(y), f = (u - SC.ylo) / (SC.yhi - SC.ylo) * (arr.length - 1);
+  if (f <= 0) return arr[0]; if (f >= arr.length - 1) return arr[arr.length - 1];
+  var i = Math.floor(f), t = f - i; return arr[i] * (1 - t) + arr[i + 1] * t;
+}
+function scCompute() {
+  SC.raf = 0;
+  var t0 = performance.now();
+  if (SC.N < SC.done - SC.N) { SC.osc1.fill(0); if (SC.ys) SC.oscY.fill(0); SC.done = 0; }
+  while (SC.done !== SC.N && performance.now() - t0 < 28) {
+    if (SC.done < SC.N) { scAddZero(SC.done, 1); SC.done++; } else { SC.done--; scAddZero(SC.done, -1); }
+  }
+  $('sc-busy').textContent = SC.done !== SC.N ? 'adding zeros… ' + SC.done + ' / ' + SC.N : '';
+  scDraw();
+  if (SC.done !== SC.N) SC.raf = requestAnimationFrame(scCompute);
+}
+function scSchedule() { if (!SC.raf) SC.raf = requestAnimationFrame(scCompute); }
+
+function scValues() {
+  // returns approx and smooth arrays over SC.xs
+  var n = SC.xs.length, approx = new Float64Array(n), smooth = new Float64Array(n);
+  for (var j = 0; j < n; j++) {
+    var x = SC.xs[j], a = SC.sm1[j] + SC.osc1[j], s = SC.sm1[j];
+    if (SC.mode === 'pi' && SC.ys) {
+      for (var m = 2; m < 64; m++) {
+        var y = Math.pow(x, 1 / m); if (y <= YCUT) break;
+        if (!MU[m]) continue;
+        var wgt = MU[m] / m * ramp(y);
+        var sy = interpY(SC.smY, y);
+        a += wgt * (sy + interpY(SC.oscY, y)); s += wgt * sy;
+      }
+    }
+    approx[j] = a; smooth[j] = s;
+  }
+  return { approx: approx, smooth: smooth };
+}
+
+function scDraw() {
+  if (!SC.xs) return;
+  var F = fitCanvas($('sc-main')), ctx = F.ctx, w = F.w, h = F.h;
+  ctx.clearRect(0, 0, w, h);
+  var v = scValues(), isPi = SC.mode === 'pi';
+  var trueF = isPi ? piTrue : JTrue;
+  var x0 = SC.xmin, x1 = SC.xmax;
+  var yTop = trueF(x1), yBot = trueF(x0);
+  var span = Math.max(2, yTop - yBot);
+  var ymin = yBot - span * 0.06, ymax = yTop + span * 0.08;
+  var L = 46, R = 14, T = 34, B = 24;
+  var A = axesFrame(ctx, x0, x1, ymin, ymax, L, T, R, B, w, h, Math.max(3, w / 90), Math.max(3, h / 60), 'x');
+  ctx.save(); ctx.beginPath(); ctx.rect(L, T, w - L - R, h - T - B); ctx.clip();
+
+  // true staircase
+  ctx.strokeStyle = COL.amber; ctx.lineWidth = 2; ctx.globalAlpha = 0.9; ctx.lineJoin = 'miter';
+  ctx.beginPath();
+  var c = trueF(x0); ctx.moveTo(A.X(x0), A.Y(c));
+  var list = isPi ? PRIMES.map(function (p) { return [p, 1]; }) : PRIME_POWERS;
+  for (var i = 0; i < list.length; i++) {
+    var p = list[i][0]; if (p <= x0) continue; if (p > x1) break;
+    ctx.lineTo(A.X(p), A.Y(c)); c += list[i][1]; ctx.lineTo(A.X(p), A.Y(c));
+  }
+  ctx.lineTo(A.X(x1), A.Y(c)); ctx.stroke(); ctx.globalAlpha = 1;
+
+  // smooth term
+  if (SC.smooth) {
+    ctx.strokeStyle = COL.dim; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]); ctx.beginPath();
+    for (var j = 0; j < SC.xs.length; j++) { var X = A.X(SC.xs[j]), Y = A.Y(v.smooth[j]); j ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  // approximation
+  ctx.strokeStyle = COL.cyan; ctx.lineWidth = 1.6; ctx.beginPath();
+  for (var k = 0; k < SC.xs.length; k++) { var X2 = A.X(SC.xs[k]), Y2 = A.Y(v.approx[k]); k ? ctx.lineTo(X2, Y2) : ctx.moveTo(X2, Y2); }
+  ctx.stroke();
+
+  // hover
+  if (SC.hoverX != null && SC.hoverX >= x0 && SC.hoverX <= x1) {
+    var hx = A.X(SC.hoverX);
+    ctx.strokeStyle = COL.dim; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(hx, T); ctx.lineTo(hx, h - B); ctx.stroke();
+    var idx = Math.round((SC.hoverX - SC.xs[0]) / (SC.xs[SC.xs.length - 1] - SC.xs[0]) * (SC.xs.length - 1));
+    var ok = idx >= 0 && idx < SC.xs.length;
+    var name = isPi ? 'π(x)' : 'J(x)';
+    $('sc-readout').textContent = 'x = ' + SC.hoverX.toFixed(2) + '   ' + name + ' = ' + (isPi ? trueF(SC.hoverX) : trueF(SC.hoverX).toFixed(3)) + (ok ? '   with ' + SC.done + ' zeros: ' + v.approx[idx].toFixed(3) : '');
+  } else $('sc-readout').textContent = '';
+  ctx.restore();
+
+  // ---- waves panel
+  var G = fitCanvas($('sc-waves')), g = G.ctx, gw = G.w, gh = G.h;
+  g.clearRect(0, 0, gw, gh);
+  var n = SC.xs.length, corr = new Float64Array(n), newest = null, firstW = null, amp = 0.5;
+  for (var q = 0; q < n; q++) { corr[q] = v.approx[q] - v.smooth[q]; var aq = Math.abs(corr[q]); if (aq > amp) amp = aq; }
+  if (SC.done > 0) { newest = new Float64Array(n); var gN = ZEROS[SC.done - 1]; for (q = 0; q < n; q++) newest[q] = wave(gN, SC.ux[q]); }
+  if (SC.first) { firstW = new Float64Array(n); for (q = 0; q < n; q++) { firstW[q] = wave(ZEROS[0], SC.ux[q]); if (Math.abs(firstW[q]) > amp) amp = Math.abs(firstW[q]); } }
+  amp *= 1.12;
+  var GA = axesFrame(g, x0, x1, -amp, amp, L, 28, R, 22, gw, gh, Math.max(3, gw / 90), 3, 'x');
+  g.save(); g.beginPath(); g.rect(L, 28, gw - L - R, gh - 50); g.clip();
+  function line(arr, col, lw, alpha) {
+    g.strokeStyle = col; g.lineWidth = lw; g.globalAlpha = alpha; g.beginPath();
+    for (var z = 0; z < n; z++) { var X = GA.X(SC.xs[z]), Y = GA.Y(arr[z]); z ? g.lineTo(X, Y) : g.moveTo(X, Y); }
+    g.stroke(); g.globalAlpha = 1;
+  }
+  if (firstW) { g.setLineDash([3, 3]); line(firstW, COL.chalk, 1, 0.45); g.setLineDash([]); }
+  line(corr, COL.cyan, 1.3, 1);
+  if (newest) line(newest, COL.rose, 1.4, 0.95);
+  g.restore();
+  $('sc-leg-new').textContent = SC.done > 0 ? 'newest wave, zero #' + SC.done + ' (γ = ' + ZEROS[SC.done - 1].toFixed(2) + ')' : 'newest wave';
+}
+
+function scUpdateLabels() {
+  $('sc-n-val').textContent = SC.N;
+  $('sc-gamma').innerHTML = SC.N > 0 ? 'Zeros ½ + iγ with γ from <b>14.13</b> to <b>' + ZEROS[SC.N - 1].toFixed(2) + '</b>, each paired with its conjugate.' : 'No zeros yet: only the smooth term is drawn.';
+  $('sc-n').value = nToSlider(SC.N);
+  $('sc-xmin').value = +SC.xmin.toFixed(2); $('sc-xmax').value = +SC.xmax.toFixed(2);
+  Array.prototype.forEach.call(document.querySelectorAll('#sc-ranges button'), function (b) { var r = b.dataset.r.split(',').map(Number); b.setAttribute('aria-pressed', String(r[0] === SC.xmin && r[1] === SC.xmax)); });
+  $('sc-tag').textContent = SC.mode === 'pi' ? 'π(x) rebuilt from ' + SC.N + ' zeros' : 'J(x) rebuilt from ' + SC.N + ' zeros';
+  $('sc-leg-true').textContent = SC.mode === 'pi' ? 'π(x), true count' : 'J(x), true count';
+}
+function scSetN(n) { SC.N = clamp(Math.round(n), 0, ZEROS.length); scUpdateLabels(); scSchedule(); }
+function scSetRange(a, b) {
+  a = clamp(a, 0, 19990); b = clamp(b, a + 3, 20000);
+  SC.xmin = a; SC.xmax = b; scUpdateLabels(); scRegrid();
+}
+function scRegrid() { if (!isVisible('staircase')) return; scBuildGrid($('sc-main').clientWidth); scSchedule(); }
+
+$('sc-n').addEventListener('input', function () { scStop(); scSetN(sliderToN(+this.value)); });
+$('sc-plus').onclick = function () { scStop(); scSetN(SC.N + 1); };
+$('sc-minus').onclick = function () { scStop(); scSetN(SC.N - 1); };
+$('sc-zero').onclick = function () { scStop(); scSetN(0); };
+$('sc-smooth').onchange = function () { SC.smooth = this.checked; scDraw(); };
+$('sc-first').onchange = function () { SC.first = this.checked; scDraw(); };
+$('sc-xmin').onchange = function () { scSetRange(+this.value || 0, SC.xmax); };
+$('sc-xmax').onchange = function () { scSetRange(SC.xmin, +this.value || 100); };
+$('sc-ranges').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; var r = b.dataset.r.split(',').map(Number); scSetRange(r[0], r[1]); };
+$('sc-mode').onclick = function (e) {
+  var b = e.target.closest('button'); if (!b) return; SC.mode = b.dataset.m;
+  Array.prototype.forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+  SC.gridKey = ''; scUpdateLabels(); scRegrid();
+};
+var scPlayT = 0;
+function scStop() { SC.playing = false; $('sc-play').textContent = 'Play: add zeros'; }
+$('sc-play').onclick = function () {
+  if (SC.playing) { scStop(); return; }
+  SC.playing = true; this.textContent = 'Pause';
+  if (SC.N >= ZEROS.length) scSetN(0);
+  var last = 0;
+  (function tick(ts) {
+    if (!SC.playing) return;
+    if (ts - last > (SC.N < 30 ? 260 : 70) && SC.done === SC.N) {
+      last = ts;
+      var step = SC.N < 30 ? 1 : Math.max(1, Math.round(SC.N * 0.035));
+      scSetN(SC.N + step);
+      if (SC.N >= ZEROS.length) { scStop(); return; }
+    }
+    requestAnimationFrame(tick);
+  })(0);
+};
+// pan / zoom on the staircase
+(function () {
+  var cv = $('sc-main'), drag = null;
+  function xAt(e) { var r = cv.getBoundingClientRect(), L = 46, R = 14; return SC.xmin + (e.clientX - r.left - L) / (r.width - L - R) * (SC.xmax - SC.xmin); }
+  cv.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, a: SC.xmin, b: SC.xmax }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', function (e) {
+    if (drag) {
+      var r = cv.getBoundingClientRect(), dx = (e.clientX - drag.x) / (r.width - 60) * (drag.b - drag.a);
+      var a = drag.a - dx, b = drag.b - dx; if (a < 0) { b -= a; a = 0; }
+      SC.xmin = +a.toFixed(3); SC.xmax = +b.toFixed(3); scUpdateLabels(); scRegrid();
+    } else { SC.hoverX = xAt(e); scDraw(); }
+  });
+  cv.addEventListener('pointerup', function () { drag = null; });
+  cv.addEventListener('pointerleave', function () { SC.hoverX = null; if (!drag) scDraw(); });
+  cv.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var xc = clamp(xAt(e), SC.xmin, SC.xmax), f = Math.exp(e.deltaY * 0.0015);
+    var a = xc - (xc - SC.xmin) * f, b = xc + (SC.xmax - xc) * f;
+    if (b - a < 3) return; a = Math.max(0, a); b = Math.min(20000, b);
+    SC.xmin = +a.toFixed(3); SC.xmax = +b.toFixed(3); scUpdateLabels(); scRegrid();
+  }, { passive: false });
+})();
+
+/* ======================================================================
+   II. CRITICAL LINE
+   ====================================================================== */
+var CL = { sigma: 0.5, t0: 0, span: 50, speed: 6, cursor: 1, playing: false, colour: true, arm: true, zeros: true,
+  ts: null, re: null, im: null, Z: null, key: '', view: null, autoFit: true };
+function clCompute() {
+  var key = CL.sigma + '|' + CL.t0 + '|' + CL.span;
+  if (key === CL.key) return; CL.key = key;
+  var n = Math.round(clamp(CL.span * 80, 2000, 14000));
+  CL.ts = new Float64Array(n); CL.re = new Float64Array(n); CL.im = new Float64Array(n);
+  var crit = Math.abs(CL.sigma - 0.5) < 1e-9; CL.Z = crit ? new Float64Array(n) : null;
+  var o = [0, 0];
+  for (var i = 0; i < n; i++) {
+    var t = CL.t0 + CL.span * i / (n - 1); CL.ts[i] = t;
+    if (Math.abs(CL.sigma - 1) < 1e-9 && Math.abs(t) < 1e-6) t = 1e-6;
+    zeta(CL.sigma, t, o); CL.re[i] = o[0]; CL.im[i] = o[1];
+    if (crit) { var th = theta(t); CL.Z[i] = Math.cos(th) * o[0] - Math.sin(th) * o[1]; }
+  }
+  if (CL.autoFit) clFit();
+}
+function clFit() {
+  var n = CL.re.length, rs = [], is = [];
+  for (var i = 0; i < n; i += 3) { if (isFinite(CL.re[i]) && isFinite(CL.im[i])) { rs.push(CL.re[i]); is.push(CL.im[i]); } }
+  rs.sort(function (a, b) { return a - b; }); is.sort(function (a, b) { return a - b; });
+  var q = function (a, p) { return a[Math.floor(clamp(p, 0, 1) * (a.length - 1))]; };
+  var r0 = Math.min(q(rs, 0.01), 0), r1 = Math.max(q(rs, 0.99), 0), i0 = Math.min(q(is, 0.01), 0), i1 = Math.max(q(is, 0.99), 0);
+  var cv = $('cl-main'), w = cv.clientWidth || 600, h = cv.clientHeight || 400;
+  var sx = (w - 60) / Math.max(r1 - r0, 0.5), sy = (h - 60) / Math.max(i1 - i0, 0.5);
+  CL.view = { cx: (r0 + r1) / 2, cy: (i0 + i1) / 2, k: Math.min(sx, sy) };
+}
+var BINS = 72, BIN_COL = [];
+(function () { // cyan -> violet -> rose -> amber along t
+  var stops = [[98, 211, 227], [140, 150, 240], [236, 115, 147], [240, 181, 74]];
+  for (var b = 0; b < BINS; b++) {
+    var f = b / (BINS - 1) * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(f)), t = f - i;
+    var c = stops[i].map(function (v, k) { return Math.round(v + (stops[i + 1][k] - v) * t); });
+    BIN_COL.push('rgb(' + c.join(',') + ')');
+  }
+})();
+function clDraw() {
+  if (!CL.ts) return;
+  var F = fitCanvas($('cl-main')), ctx = F.ctx, w = F.w, h = F.h, V = CL.view;
+  ctx.clearRect(0, 0, w, h);
+  var X = function (re) { return w / 2 + (re - V.cx) * V.k; }, Y = function (im) { return h / 2 - (im - V.cy) * V.k; };
+  // grid
+  var r0 = V.cx - w / 2 / V.k, r1 = V.cx + w / 2 / V.k, i0 = V.cy - h / 2 / V.k, i1 = V.cy + h / 2 / V.k;
+  ctx.lineWidth = 1; ctx.strokeStyle = COL.rule; ctx.beginPath();
+  var tr = ticks(r0, r1, Math.max(4, w / 90)), ti = ticks(i0, i1, Math.max(4, h / 90));
+  tr.forEach(function (v) { var p = Math.round(X(v)) + 0.5; ctx.moveTo(p, 0); ctx.lineTo(p, h); });
+  ti.forEach(function (v) { var p = Math.round(Y(v)) + 0.5; ctx.moveTo(0, p); ctx.lineTo(w, p); });
+  ctx.stroke();
+  ctx.strokeStyle = COL.dim; ctx.globalAlpha = 0.6; ctx.beginPath();
+  ctx.moveTo(0, Math.round(Y(0)) + 0.5); ctx.lineTo(w, Math.round(Y(0)) + 0.5); ctx.moveTo(Math.round(X(0)) + 0.5, 0); ctx.lineTo(Math.round(X(0)) + 0.5, h); ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.font = MONO; ctx.fillStyle = COL.dim; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  tr.forEach(function (v) { if (v !== 0) ctx.fillText(fmtTick(v), X(v) + 3, clamp(Y(0) + 3, 26, h - 16)); });
+  ti.forEach(function (v) { if (v !== 0) ctx.fillText(fmtTick(v) + 'i', clamp(X(0) + 4, 4, w - 50), Y(v) + 2); });
+  // mark w = 1 (the mean value)
+  ctx.fillStyle = COL.dim; ctx.beginPath(); ctx.arc(X(1), Y(0), 2.5, 0, 7); ctx.fill();
+
+  var n = CL.ts.length, last = Math.max(1, Math.round(CL.cursor * (n - 1)));
+  ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (CL.colour) {
+    var per = (n - 1) / BINS;
+    for (var b = 0; b < BINS; b++) {
+      var s = Math.floor(b * per), e = Math.min(last, Math.ceil((b + 1) * per));
+      if (s >= last) break;
+      ctx.strokeStyle = BIN_COL[b]; ctx.beginPath(); ctx.moveTo(X(CL.re[s]), Y(CL.im[s]));
+      for (var i = s + 1; i <= e; i++) ctx.lineTo(X(CL.re[i]), Y(CL.im[i]));
+      ctx.stroke();
+    }
+  } else {
+    ctx.strokeStyle = COL.cyan; ctx.beginPath(); ctx.moveTo(X(CL.re[0]), Y(CL.im[0]));
+    for (var j = 1; j <= last; j++) ctx.lineTo(X(CL.re[j]), Y(CL.im[j]));
+    ctx.stroke();
+  }
+  // zeros passed
+  var tc = CL.ts[last], crit = Math.abs(CL.sigma - 0.5) < 1e-9, passed = 0, recent = null;
+  for (var z = 0; z < ZEROS.length && ZEROS[z] <= tc; z++) if (ZEROS[z] >= CL.t0) { passed++; recent = ZEROS[z]; }
+  if (CL.zeros && crit && passed) {
+    var ox = X(0), oy = Y(0), since = tc - recent, glow = clamp(1 - since / Math.max(0.6, CL.span / 40), 0, 1);
+    ctx.strokeStyle = COL.amber; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5 + 0.5 * glow;
+    ctx.beginPath(); ctx.arc(ox, oy, 6 + 10 * glow, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  // arm and pen
+  var pr = CL.re[last], pi = CL.im[last];
+  if (CL.arm) { ctx.strokeStyle = COL.chalk; ctx.globalAlpha = 0.35; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(pr), Y(pi)); ctx.stroke(); ctx.globalAlpha = 1; }
+  if (CL.cursor < 1 || CL.playing) { ctx.fillStyle = COL.chalk; ctx.beginPath(); ctx.arc(X(pr), Y(pi), 4, 0, 7); ctx.fill(); }
+  $('cl-readout').textContent = 's = ' + fmtC(CL.sigma, tc, 3) + '   ζ(s) = ' + fmtC(pr, pi, 4) + '   |ζ| = ' + fmt(Math.hypot(pr, pi), 4);
+  $('cl-stat').innerHTML = crit
+    ? 'Zeros of ζ on this stretch: <b>' + passed + '</b> passed so far' + (recent ? ', latest at t = <b>' + recent.toFixed(4) + '</b>' : '') + '.'
+    : 'Off the critical line no zeros are expected: the curve misses the origin. Closest approach so far: <b>' + fmt(clMinMod(last), 4) + '</b>.';
+  clDrawGraph(last);
+}
+function clMinMod(last) { var m = Infinity; for (var i = 0; i <= last; i++) { var a = Math.hypot(CL.re[i], CL.im[i]); if (a < m) m = a; } return m; }
+function clDrawGraph(last) {
+  var F = fitCanvas($('cl-graph')), g = F.ctx, w = F.w, h = F.h; g.clearRect(0, 0, w, h);
+  var n = CL.ts.length, crit = !!CL.Z, arr = new Float64Array(n), amp = 0.5;
+  for (var i = 0; i < n; i++) { arr[i] = crit ? CL.Z[i] : Math.hypot(CL.re[i], CL.im[i]); }
+  var sorted = Array.prototype.slice.call(arr).map(Math.abs).sort(function (a, b) { return a - b; });
+  amp = Math.max(0.5, sorted[Math.floor(sorted.length * 0.995)] * 1.1);
+  var y0 = crit ? -amp : 0, L = 46, R = 14, T = 28, B = 22;
+  var A = axesFrame(g, CL.t0, CL.t0 + CL.span, y0, amp, L, T, R, B, w, h, Math.max(3, w / 90), 3, 't');
+  g.save(); g.beginPath(); g.rect(L, T, w - L - R, h - T - B); g.clip();
+  if (crit) { g.strokeStyle = COL.dim; g.beginPath(); g.moveTo(L, A.Y(0)); g.lineTo(w - R, A.Y(0)); g.stroke(); }
+  // future part faint, traced part bright
+  [[0, n - 1, 0.25], [0, last, 1]].forEach(function (seg) {
+    g.strokeStyle = COL.cyan; g.globalAlpha = seg[2]; g.lineWidth = 1.3; g.beginPath();
+    for (var j = seg[0]; j <= seg[1]; j++) { var X = A.X(CL.ts[j]), Y = A.Y(arr[j]); j === seg[0] ? g.moveTo(X, Y) : g.lineTo(X, Y); }
+    g.stroke();
+  });
+  g.globalAlpha = 1;
+  if (crit && CL.zeros) {
+    g.fillStyle = COL.amber;
+    for (var z = 0; z < ZEROS.length && ZEROS[z] <= CL.t0 + CL.span; z++) if (ZEROS[z] >= CL.t0) { g.beginPath(); g.arc(A.X(ZEROS[z]), A.Y(0), 2.6, 0, 7); g.fill(); }
+  }
+  var cx = A.X(CL.ts[last]); g.strokeStyle = COL.rose; g.lineWidth = 1.2; g.beginPath(); g.moveTo(cx, T); g.lineTo(cx, h - B); g.stroke();
+  g.restore();
+  $('cl-gtag').textContent = crit ? 'Z(t): real along the critical line, zero at each ζ zero' : '|ζ(σ + it)| along the line σ = ' + CL.sigma.toFixed(2);
+  $('cl-glegend').innerHTML = crit ? '<span class="c">Z(t)</span><span class="a">zeros</span><span class="r">t now</span>' : '<span class="c">|ζ|</span><span class="r">t now</span>';
+}
+function clLabels() {
+  $('cl-sigma-val').textContent = CL.sigma.toFixed(2); $('cl-sigma').value = CL.sigma;
+  $('cl-t0-val').textContent = CL.t0; $('cl-t0').value = CL.t0;
+  $('cl-span-val').textContent = CL.span; $('cl-span').value = CL.span;
+  $('cl-speed-val').textContent = CL.speed + ' t/s';
+  Array.prototype.forEach.call(document.querySelectorAll('#cl-sigmas button'), function (b) { b.setAttribute('aria-pressed', String(+b.dataset.s === CL.sigma)); });
+  $('cl-tag').textContent = 'ζ(' + CL.sigma.toFixed(2) + ' + it) for t from ' + CL.t0 + ' to ' + (CL.t0 + CL.span);
+}
+function clRefresh(fit) { if (fit) CL.autoFit = true; clLabels(); if (!isVisible('critical-line')) return; clCompute(); clDraw(); }
+function clSetSigma(s) { var snapped = Math.abs(s - 0.5) < 0.012 ? 0.5 : s; CL.sigma = Math.round(snapped * 100) / 100; clRefresh(false); if (planeVisibleLine()) plDrawOverlay(); }
+$('cl-sigma').addEventListener('input', function () { clSetSigma(+this.value); });
+$('cl-sigmas').onclick = function (e) { var b = e.target.closest('button'); if (b) clSetSigma(+b.dataset.s); };
+$('cl-t0').addEventListener('input', function () { CL.t0 = +this.value; clRefresh(true); });
+$('cl-span').addEventListener('input', function () { CL.span = +this.value; clRefresh(true); });
+$('cl-speed').addEventListener('input', function () { CL.speed = +this.value; clLabels(); });
+$('cl-colour').onchange = function () { CL.colour = this.checked; clDraw(); };
+$('cl-arm').onchange = function () { CL.arm = this.checked; clDraw(); };
+$('cl-zeros').onchange = function () { CL.zeros = this.checked; clDraw(); };
+$('cl-fit').onclick = function () { CL.autoFit = true; clFit(); clDraw(); };
+function clStop() { CL.playing = false; $('cl-play').textContent = CL.cursor >= 1 ? 'Trace from t₀' : 'Resume'; }
+$('cl-play').onclick = function () {
+  if (CL.playing) { clStop(); return; }
+  if (CL.cursor >= 1) CL.cursor = 0;
+  CL.playing = true; this.textContent = 'Pause';
+  var prev = null;
+  (function tick(ts) {
+    if (!CL.playing) return;
+    if (prev != null) CL.cursor = Math.min(1, CL.cursor + (ts - prev) / 1000 * CL.speed / CL.span);
+    prev = ts; clDraw();
+    if (CL.cursor >= 1) { clStop(); return; }
+    requestAnimationFrame(tick);
+  })(performance.now());
+};
+(function () { // scrub on the graph
+  var cv = $('cl-graph'), down = false;
+  function scrub(e) { var r = cv.getBoundingClientRect(); CL.cursor = clamp((e.clientX - r.left - 46) / (r.width - 60), 0.0005, 1); if (CL.playing) clStop(); clDraw(); $('cl-play').textContent = CL.cursor >= 1 ? 'Trace from t₀' : 'Resume'; }
+  cv.addEventListener('pointerdown', function (e) { down = true; cv.setPointerCapture(e.pointerId); scrub(e); });
+  cv.addEventListener('pointermove', function (e) { if (down) scrub(e); });
+  cv.addEventListener('pointerup', function () { down = false; });
+})();
+(function () { // pan/zoom the curve
+  var cv = $('cl-main'), drag = null;
+  cv.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, cx: CL.view.cx, cy: CL.view.cy }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', function (e) { if (!drag) return; CL.autoFit = false; CL.view.cx = drag.cx - (e.clientX - drag.x) / CL.view.k; CL.view.cy = drag.cy + (e.clientY - drag.y) / CL.view.k; clDraw(); });
+  cv.addEventListener('pointerup', function () { drag = null; });
+  cv.addEventListener('wheel', function (e) {
+    e.preventDefault(); CL.autoFit = false;
+    var r = cv.getBoundingClientRect(), V = CL.view, mx = e.clientX - r.left - r.width / 2, my = e.clientY - r.top - r.height / 2;
+    var wr = V.cx + mx / V.k, wi = V.cy - my / V.k, f = Math.exp(-e.deltaY * 0.0015);
+    V.k *= f; V.cx = wr - mx / V.k; V.cy = wi + my / V.k; clDraw();
+  }, { passive: false });
+})();
+
+/* ======================================================================
+   III. COMPLEX PLANE
+   ====================================================================== */
+var PL = { cx: -5, cy: 12, k: 10, mode: 0, phase: false, marks: true, line: true, job: 0, img: null, hover: null };
+var WORKERS = [];
+(function () {
+  var src = $('core').textContent + '\n' + 'var _o=[0,0];\n' +
+    'function hsl(h,s,l,o,i){var a=s*Math.min(l,1-l);function f(n){var k=(n+h*12)%12;return l-a*Math.max(-1,Math.min(k-3,9-k,1));}o[i]=255*f(0);o[i+1]=255*f(8);o[i+2]=255*f(4);o[i+3]=255;}\n' +
+    'onmessage=function(e){var d=e.data,w=d.w,rows=d.rows,buf=new Uint8ClampedArray(w*rows*4),TP=2*Math.PI;\n' +
+    ' for(var r=0;r<rows;r++){var im=d.y0-(d.row0+r+0.5)*d.dy;for(var c=0;c<w;c++){var re=d.x0+(c+0.5)*d.dx;zeta(re,im,_o);\n' +
+    '  var mod=Math.sqrt(_o[0]*_o[0]+_o[1]*_o[1]),arg=Math.atan2(_o[1],_o[0]),h=arg/TP;if(h<0)h+=1;var lm=Math.log(mod),i=(r*w+c)*4;\n' +
+    '  var L=0.5,S=0.92,shade=1;if(d.mode!==1){L=0.06+0.86*(0.5+Math.atan(lm/2.2)/Math.PI);var f=lm/Math.LN2+0.5;f-=Math.floor(f);shade=0.74+0.26*f;}\n' +
+    '  if(d.phase){var p=arg*6/Math.PI,dd=Math.abs(p-Math.round(p));if(dd<0.06)shade*=0.55+dd*7.5;}\n' +
+    '  if(d.mode===2){S=0;}\n' +
+    '  if(!isFinite(mod)){buf[i]=buf[i+1]=buf[i+2]=245;buf[i+3]=255;continue;}\n' +
+    '  hsl(h,S,Math.min(0.97,L*shade),buf,i);}}\n' +
+    ' postMessage({job:d.job,pass:d.pass,row0:d.row0,rows:rows,w:w,buf:buf},[buf.buffer]);};';
+  try {
+    var url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    var n = Math.max(2, Math.min(6, (navigator.hardwareConcurrency || 4) - 1));
+    for (var i = 0; i < n; i++) { var wk = new Worker(url); wk.onmessage = plOnMsg; WORKERS.push(wk); }
+  } catch (err) { WORKERS = []; }
+})();
+var plPass = null;
+function plRender() {
+  if (!isVisible('plane')) return;
+  var cv = $('pl-img'), dpr = Math.min(1.5, window.devicePixelRatio || 1);
+  var w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return;
+  PL.job++;
+  var passes = [6, 2, 1 / dpr];
+  plStartPass(PL.job, passes, 0, w, h);
+}
+function plStartPass(job, passes, p, w, h) {
+  var s = passes[p], W = Math.ceil(w / s), H = Math.ceil(h / s);
+  var x0 = PL.cx - w / 2 / PL.k, y0 = PL.cy + h / 2 / PL.k, dx = w / PL.k / W, dy = h / PL.k / H;
+  plPass = { job: job, passes: passes, p: p, w: w, h: h, W: W, H: H, img: new ImageData(W, H), left: 0, x0: x0, y0: y0, k: PL.k, cx: PL.cx, cy: PL.cy };
+  $('pl-busy').textContent = p < passes.length - 1 ? 'refining…' : '';
+  var msg = { job: job, pass: p, w: W, x0: x0, y0: y0, dx: dx, dy: dy, mode: PL.mode, phase: PL.phase };
+  if (!WORKERS.length) { plMainThread(msg, H); return; }
+  var chunk = Math.max(4, Math.ceil(H / (WORKERS.length * 4))), wi = 0;
+  for (var r = 0; r < H; r += chunk) { plPass.left++; var m = Object.assign({}, msg, { row0: r, rows: Math.min(chunk, H - r) }); WORKERS[wi++ % WORKERS.length].postMessage(m); }
+}
+function plOnMsg(e) {
+  var d = e.data, P = plPass; if (!P || d.job !== P.job || d.pass !== P.p) return;
+  P.img.data.set(d.buf, d.row0 * d.w * 4); P.left--;
+  if (P.left === 0) plFinishPass(P);
+}
+function plMainThread(msg, H) { // fallback without workers
+  var o = [0, 0], P = plPass, data = P.img.data;
+  for (var r = 0; r < H; r++) for (var c = 0; c < msg.w; c++) {
+    zeta(msg.x0 + (c + 0.5) * msg.dx, msg.y0 - (r + 0.5) * msg.dy, o);
+    var arg = Math.atan2(o[1], o[0]), h = arg / (2 * Math.PI); if (h < 0) h += 1;
+    var col = hslRgb(h, 0.9, 0.06 + 0.86 * (0.5 + Math.atan(Math.log(Math.hypot(o[0], o[1])) / 2.2) / Math.PI)), i = (r * msg.w + c) * 4;
+    data[i] = col[0]; data[i + 1] = col[1]; data[i + 2] = col[2]; data[i + 3] = 255;
+  }
+  plFinishPass(P);
+}
+function hslRgb(h, s, l) { var a = s * Math.min(l, 1 - l); function f(n) { var k = (n + h * 12) % 12; return 255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))); } return [f(0), f(8), f(4)]; }
+function plFinishPass(P) {
+  var off = document.createElement('canvas'); off.width = P.W; off.height = P.H; off.getContext('2d').putImageData(P.img, 0, 0);
+  PL.img = { canvas: off, cx: P.cx, cy: P.cy, k: P.k, w: P.w, h: P.h };
+  plBlit();
+  if (P.p + 1 < P.passes.length && P.job === PL.job) plStartPass(P.job, P.passes, P.p + 1, P.w, P.h);
+  else $('pl-busy').textContent = '';
+}
+function plBlit() {
+  var F = fitCanvas($('pl-img')), ctx = F.ctx, w = F.w, h = F.h;
+  ctx.fillStyle = COL.ink; ctx.fillRect(0, 0, w, h);
+  var I = PL.img;
+  if (I) {
+    // place the stored image under the current view (for instant pan/zoom feedback)
+    var s = PL.k / I.k, iw = I.w * s, ih = I.h * s;
+    var left = w / 2 + ((I.cx - I.w / 2 / I.k) - PL.cx) * PL.k, top = h / 2 - ((I.cy + I.h / 2 / I.k) - PL.cy) * PL.k;
+    ctx.imageSmoothingEnabled = I.canvas.width < I.w; ctx.drawImage(I.canvas, left, top, iw, ih);
+  }
+  plDrawOverlay();
+}
+function planeVisibleLine() { return isVisible('plane') && PL.line; }
+function plDrawOverlay() {
+  var F = fitCanvas($('pl-over')), ctx = F.ctx, w = F.w, h = F.h; ctx.clearRect(0, 0, w, h);
+  var X = function (re) { return w / 2 + (re - PL.cx) * PL.k; }, Y = function (im) { return h / 2 - (im - PL.cy) * PL.k; };
+  var r0 = PL.cx - w / 2 / PL.k, r1 = PL.cx + w / 2 / PL.k, i0 = PL.cy - h / 2 / PL.k, i1 = PL.cy + h / 2 / PL.k;
+  ctx.font = MONO; ctx.lineWidth = 1;
+  // axes ticks along edges
+  ctx.fillStyle = 'rgba(12,14,22,0.72)'; ctx.fillRect(0, h - 20, w, 20); ctx.fillRect(0, 0, 44, h - 20);
+  ctx.fillStyle = COL.chalk; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  ticks(r0, r1, Math.max(4, w / 90)).forEach(function (v) { var x = X(v); if (x > 50) { ctx.fillText(fmtTick(v), x, h - 10); ctx.fillRect(Math.round(x), h - 22, 1, 4); } });
+  ctx.textAlign = 'right';
+  ticks(i0, i1, Math.max(4, h / 70)).forEach(function (v) { var y = Y(v); if (y < h - 26 && y > 24) { ctx.fillText(fmtTick(v) + 'i', 40, y); ctx.fillRect(44, Math.round(y), 4, 1); } });
+  if (PL.marks) {
+    ctx.save(); ctx.beginPath(); ctx.rect(44, 0, w - 44, h - 20); ctx.clip();
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.setLineDash([2, 4]);
+    [0, 1].forEach(function (s) { var x = Math.round(X(s)) + 0.5; ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); });
+    ctx.setLineDash([6, 4]); ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    var xc = Math.round(X(0.5)) + 0.5; ctx.beginPath(); ctx.moveTo(xc, 0); ctx.lineTo(xc, h); ctx.stroke(); ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.moveTo(0, Math.round(Y(0)) + 0.5); ctx.lineTo(w, Math.round(Y(0)) + 0.5); ctx.stroke();
+    // nontrivial zeros
+    var gap = ZEROS.length > 1 ? (ZEROS[1] - ZEROS[0]) : 1, rad = clamp(PL.k * 0.18, 3, 7);
+    if (PL.k * 0.5 > 1.2) {
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.4;
+      for (var z = 0; z < ZEROS.length; z++) {
+        var g = ZEROS[z]; if (g > Math.max(Math.abs(i0), Math.abs(i1)) + 1) break;
+        [g, -g].forEach(function (t) { if (t >= i0 - 1 && t <= i1 + 1) { ctx.beginPath(); ctx.arc(X(0.5), Y(t), rad, 0, 7); ctx.stroke(); } });
+      }
+    }
+    // trivial zeros
+    for (var n = -2; n >= r0 - 2; n -= 2) { if (n > r1 + 2) continue; ctx.beginPath(); ctx.arc(X(n), Y(0), rad, 0, 7); ctx.stroke(); }
+    // pole
+    var px = X(1), py = Y(0); ctx.strokeStyle = '#0c0e16'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px - 5, py - 5); ctx.lineTo(px + 5, py + 5); ctx.moveTo(px + 5, py - 5); ctx.lineTo(px - 5, py + 5); ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    if (X(0.5) > 60 && X(0.5) < w - 90) ctx.fillText('σ = ½', X(0.5) + 5, 18);
+    ctx.restore();
+  }
+  if (PL.line) { // the path from view II
+    ctx.strokeStyle = COL.amber; ctx.lineWidth = 3; ctx.globalAlpha = 0.9;
+    ctx.beginPath(); ctx.moveTo(X(CL.sigma), Y(CL.t0)); ctx.lineTo(X(CL.sigma), Y(CL.t0 + CL.span)); ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  if (PL.hover) {
+    var hx = X(PL.hover[0]), hy = Y(PL.hover[1]); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(hx - 8, hy); ctx.lineTo(hx + 8, hy); ctx.moveTo(hx, hy - 8); ctx.lineTo(hx, hy + 8); ctx.stroke();
+  }
+  $('pl-stat').innerHTML = 'View: σ from <b>' + r0.toFixed(2) + '</b> to <b>' + r1.toFixed(2) + '</b>, t from <b>' + i0.toFixed(2) + '</b> to <b>' + i1.toFixed(2) + '</b>.' + (PL.line ? '<br>The amber segment is σ = ' + CL.sigma.toFixed(2) + ', t ∈ [' + CL.t0 + ', ' + (CL.t0 + CL.span) + '] from view II.' : '');
+}
+var plTimer = 0;
+function plSoon() { plBlit(); clearTimeout(plTimer); plTimer = setTimeout(plRender, 140); }
+function plGo(cx, cy, height) { var h = $('pl-img').clientHeight || 600; PL.cx = cx; PL.cy = cy; PL.k = h / height; plBlit(); plRender(); }
+$('pl-presets').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; var p = b.dataset.p.split(',').map(Number); plGo(p[0], p[1], p[2]); };
+$('pl-zin').onclick = function () { PL.k *= 1.6; plSoon(); };
+$('pl-zout').onclick = function () { PL.k /= 1.6; plSoon(); };
+$('pl-mode').onchange = function () { PL.mode = +this.value; plRender(); };
+$('pl-phase').onchange = function () { PL.phase = this.checked; plRender(); };
+$('pl-marks').onchange = function () { PL.marks = this.checked; plDrawOverlay(); };
+$('pl-line').onchange = function () { PL.line = this.checked; plDrawOverlay(); };
+(function () {
+  var cv = $('pl-over'), drag = null, o = [0, 0];
+  function at(e) { var r = cv.getBoundingClientRect(); return [PL.cx + (e.clientX - r.left - r.width / 2) / PL.k, PL.cy - (e.clientY - r.top - r.height / 2) / PL.k]; }
+  cv.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, cx: PL.cx, cy: PL.cy, moved: false }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', function (e) {
+    if (drag) { var dx = e.clientX - drag.x, dy = e.clientY - drag.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true; PL.cx = drag.cx - dx / PL.k; PL.cy = drag.cy + dy / PL.k; plBlit(); return; }
+    var s = at(e); PL.hover = s; zeta(s[0], s[1], o);
+    $('pl-readout').textContent = 's = ' + fmtC(s[0], s[1], 3) + '   ζ(s) = ' + fmtC(o[0], o[1], 4) + '   |ζ| = ' + fmt(Math.hypot(o[0], o[1]), 4) + '   arg = ' + (Math.atan2(o[1], o[0]) * 180 / Math.PI).toFixed(1) + '°';
+    plDrawOverlay();
+  });
+  cv.addEventListener('pointerup', function () { if (drag && drag.moved) plRender(); drag = null; });
+  cv.addEventListener('pointerleave', function () { PL.hover = null; $('pl-readout').textContent = ''; plDrawOverlay(); });
+  cv.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var r = cv.getBoundingClientRect(), mx = e.clientX - r.left - r.width / 2, my = e.clientY - r.top - r.height / 2;
+    var sr = PL.cx + mx / PL.k, si = PL.cy - my / PL.k, f = Math.exp(-e.deltaY * 0.0015);
+    PL.k = clamp(PL.k * f, 0.5, 5e5); PL.cx = sr - mx / PL.k; PL.cy = si + my / PL.k; plSoon();
+  }, { passive: false });
+})();
+(function () { // hue key
+  var cv = $('pl-wheel'), ctx = cv.getContext('2d'), img = ctx.createImageData(108, 108);
+  for (var y = 0; y < 108; y++) for (var x = 0; x < 108; x++) {
+    var dx = x - 54, dy = 54 - y, r = Math.hypot(dx, dy), i = (y * 108 + x) * 4; if (r > 52) continue;
+    var h = Math.atan2(dy, dx) / (2 * Math.PI); if (h < 0) h += 1;
+    var c = hslRgb(h, 0.92, 0.12 + 0.6 * r / 52); img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+})();
+
+/* ======================================================================
+   routing and resize
+   ====================================================================== */
+var VIEWS = ['staircase', 'critical-line', 'plane'], current = 'staircase';
+function isVisible(v) { return current === v; }
+function show(v) {
+  if (VIEWS.indexOf(v) < 0) v = 'staircase';
+  current = v;
+  VIEWS.forEach(function (n) { $('v-' + n).hidden = n !== v; });
+  Array.prototype.forEach.call(document.querySelectorAll('nav.tabs a'), function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  requestAnimationFrame(function () {
+    if (v === 'staircase') scRegrid();
+    if (v === 'critical-line') { CL.key = ''; clRefresh(false); }
+    if (v === 'plane') { if (!PL.img) { var h = $('pl-img').clientHeight || 600; PL.k = h / 40; } plBlit(); plRender(); }
+  });
+}
+window.addEventListener('hashchange', function () { show(location.hash.slice(1)); });
+var rsTimer = 0;
+window.addEventListener('resize', function () {
+  clearTimeout(rsTimer);
+  rsTimer = setTimeout(function () {
+    if (current === 'staircase') scRegrid();
+    if (current === 'critical-line') { if (CL.autoFit) clFit(); clDraw(); }
+    if (current === 'plane') { plBlit(); plRender(); }
+  }, 120);
+});
+
+// initial state
+SC.N = 30; scUpdateLabels(); clLabels();
+show(location.hash.slice(1) || 'staircase');
+
+</script>
+
+</body>
+</html>

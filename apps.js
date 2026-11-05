@@ -46,6 +46,14 @@ window.APPS = [
         icon: "mandelbrot",
       },
       {
+        name: "Zeta Atlas",
+        desc: "Watch the zeros of the Riemann zeta function build the prime staircase, trace ζ up the critical strip, and see it across the whole complex plane.",
+        tags: ["Number theory", "Maths"],
+        url: "/zeta-atlas/",
+        status: "live",
+        icon: "zeta",
+      },
+      {
         name: "Double Pendulum",
         desc: "A chaos bench. Two pendulums that start almost the same soon end up nowhere near each other.",
         tags: ["Physics", "Chaos"],
