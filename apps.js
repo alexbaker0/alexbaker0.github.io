@@ -54,6 +54,22 @@ window.APPS = [
         icon: "zeta",
       },
       {
+        name: "Causal Emergence",
+        desc: "Group the states of a Markov chain and see when the big-picture description is a better causal model than the fine-grained one.",
+        tags: ["Information theory", "Maths"],
+        url: "/causal-levels/#emergence",
+        status: "live",
+        icon: "emergence",
+      },
+      {
+        name: "Heart Cell Voltage Clamp",
+        desc: "Denis Noble's 1962 heart cell model. Clamp the voltage or freeze a channel gate and the beat stops either way: causation runs both down and up.",
+        tags: ["Biology", "Simulation"],
+        url: "/causal-levels/#noble",
+        status: "live",
+        icon: "clamp",
+      },
+      {
         name: "Double Pendulum",
         desc: "A chaos bench. Two pendulums that start almost the same soon end up nowhere near each other.",
         tags: ["Physics", "Chaos"],
