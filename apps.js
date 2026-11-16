@@ -49,7 +49,7 @@ window.APPS = [
         name: "Zeta Atlas",
         desc: "Watch the zeros of the Riemann zeta function build the prime staircase, trace ζ up the critical strip, and see it across the whole complex plane.",
         tags: ["Number theory", "Maths"],
-        url: "/zeta-atlas/",
+        url: "/Zeta/",
         status: "live",
         icon: "zeta",
       },
