@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Interactive Gray–Scott reaction–diffusion simulation: grow spots, stripes, worms and coral in your browser.">
+<title>Turing Pattern Lab</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#10151f;color:#e8edf5}
+*{box-sizing:border-box}
+body{background:#10151f;margin:0;padding:24px;max-width:850px;margin-inline:auto}
+h1{font-size:1.5rem;margin:0 0 6px}
+.sub{color:#aab5c5;font-size:.9rem;margin-bottom:18px}
+.panel{background:#192231;border:1px solid #354256;border-radius:10px;padding:14px;margin:12px 0}
+canvas{display:block;width:100%;aspect-ratio:1.6;background:#050914;border-radius:8px;image-rendering:pixelated;touch-action:none}
+button{background:#202d40;color:#e8edf5;border:1px solid #46566e;border-radius:8px;padding:8px 12px;font-size:14px;cursor:pointer}
+button:hover{background:#2b3b52}
+button.active{background:#315477;border-color:#75a9d9}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-bottom:6px}
+input[type=range]{width:100%;accent-color:#70b6ed}
+.muted{color:#aab5c5;font-size:12px}
+.value{font-family:ui-monospace,monospace}
+h2{font-size:1rem;margin:0 0 12px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.stat-label{font-size:12px;color:#aab5c5}
+.stat-value{font-family:ui-monospace,monospace;font-size:16px;margin-top:3px}
+.legend{height:8px;border-radius:4px;margin-top:8px;background:linear-gradient(90deg,rgb(5,10,25),rgb(18,103,140),rgb(30,195,255))}
+button:focus-visible,input:focus-visible{outline:2px solid #75a9d9;outline-offset:2px}
+@media(max-width:520px){body{padding:14px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>Turing Pattern Lab</h1>
+<div class="sub">Gray–Scott reaction–diffusion model · Interactive 2D simulation</div>
+
+<div class="panel">
+ <canvas id="canvas" width="240" height="150" role="img" aria-label="Live reaction diffusion pattern"></canvas>
+ <div class="legend" aria-hidden="true"></div>
+ <div class="muted" style="display:flex;justify-content:space-between;margin-top:4px"><span>V = 0</span><span>V concentration</span><span>V ≥ 0.40</span></div>
+</div>
+<div class="controls">
+ <button id="toggle">Ⅱ Pause</button>
+ <button id="reset">↻ Restart</button>
+ <button id="add">+ Add seeds</button>
+</div>
+
+<div class="panel">
+ <h2>Pattern presets</h2>
+ <div class="controls" id="presets">
+  <button data-p="spots" class="active" aria-pressed="true">Spots</button>
+  <button data-p="stripes" aria-pressed="false">Stripes</button>
+  <button data-p="worms" aria-pressed="false">Worms</button>
+  <button data-p="coral" aria-pressed="false">Coral</button>
+ </div>
+ <p id="description" class="muted">Spots that split and multiply until they fill the field.</p>
+</div>
+
+<div class="panel">
+ <h2>Reaction parameters</h2>
+ <div class="grid">
+  <div><label for="feed">Feed rate F <span id="fv" class="value">0.0250</span></label><input id="feed" type="range" min=".01" max=".08" step=".0005" value=".025"></div>
+  <div><label for="kill">Kill rate k <span id="kv" class="value">0.0600</span></label><input id="kill" type="range" min=".03" max=".08" step=".0005" value=".060"></div>
+  <div><label for="speed">Simulation speed <span id="sv" class="value">5</span></label><input id="speed" type="range" min="1" max="15" value="5"></div>
+ </div>
+</div>
+
+<div class="panel">
+ <h2>Live numerical diagnostics</h2>
+ <div class="stats">
+  <div><div class="stat-label">Iterations</div><div id="iterations" class="stat-value">0</div></div>
+  <div><div class="stat-label">Maximum V</div><div id="max" class="stat-value">0.25000</div></div>
+  <div><div class="stat-label">Mean V</div><div id="mean" class="stat-value">—</div></div>
+  <div><div class="stat-label">Mean UV²</div><div id="reaction" class="stat-value">—</div></div>
+ </div>
+ <p id="check" class="muted" aria-live="polite">Checking initial conditions.</p>
+</div>
+<p class="muted">Click or drag on the pattern to add more V chemical. The simulation uses periodic boundary conditions.</p>
+
+<script>
+(()=>{
+const root=document;
+const $=id=>root.getElementById(id);
+const W=240,H=150,N=W*H,dt=1,DU=.16,DV=.08,VMAX=.4;
+// Explicit Euler is stable while dt*4*DU < 1; dt=1 gives 0.64.
+const XM=new Int32Array(W),XP=new Int32Array(W),YM=new Int32Array(H),YP=new Int32Array(H);
+for(let x=0;x<W;x++){XM[x]=(x+W-1)%W;XP[x]=(x+1)%W}
+for(let y=0;y<H;y++){YM[y]=((y+H-1)%H)*W;YP[y]=((y+1)%H)*W}
+const ctx=$('canvas').getContext('2d');
+const pixels=ctx.createImageData(W,H);
+let u=new Float32Array(N),v=new Float32Array(N);
+let un=new Float32Array(N),vn=new Float32Array(N);
+let running=true,raf=0,iteration=0,preset='spots';
+const settings={
+ spots:[.025,.060,'Spots that split and multiply until they fill the field.'],
+ stripes:[.030,.057,'Bands and stripes that fold into a maze.'],
+ worms:[.058,.065,'Separate worm-like strands that wander and curl.'],
+ coral:[.055,.062,'Branching coral-like structures.']
+};
+function seed(cx,cy,r){
+ cx=Math.floor(cx);cy=Math.floor(cy);
+ for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+  if(dx*dx+dy*dy>r*r)continue;
+  const x=(cx+dx+W)%W,y=(cy+dy+H)%H,i=y*W+x;
+  u[i]=.5;v[i]=.25;
+ }
+}
+function initialise(){
+ u.fill(1);v.fill(0);iteration=0;
+ if(preset==='spots'){
+  seed(120,75,12);
+  seed(50,40,5);seed(190,40,5);seed(50,110,5);seed(190,110,5);
+ }else if(preset==='stripes'){
+  for(let y=15;y<H;y+=22)for(let x=15;x<W;x+=22)seed(x,y,4);
+ }else if(preset==='worms'){
+  for(let i=0;i<35;i++)seed(Math.random()*W,Math.random()*H,4);
+ }else{
+  for(let i=0;i<20;i++)seed(Math.random()*W,Math.random()*H,6);
+ }
+ draw();
+}
+function step(F,K){
+ for(let y=0;y<H;y++){
+  const row=y*W,ym=YM[y],yp=YP[y];
+  for(let x=0;x<W;x++){
+   const i=row+x,U=u[i],V=v[i],l=row+XM[x],r=row+XP[x],t=ym+x,b=yp+x;
+   const reaction=U*V*V;
+   un[i]=U+dt*(DU*(u[l]+u[r]+u[t]+u[b]-4*U)-reaction+F*(1-U));
+   vn[i]=V+dt*(DV*(v[l]+v[r]+v[t]+v[b]-4*V)+reaction-(F+K)*V);
+  }
+ }
+ [u,un]=[un,u];[v,vn]=[vn,v];
+ iteration++;
+}
+function draw(){
+ let max=0,sum=0,reactionMean=0,finite=true;
+ for(let i=0;i<N;i++){
+  const U=u[i],V=v[i];
+  if(!Number.isFinite(U)||!Number.isFinite(V)){finite=false;break}
+  max=Math.max(max,V);sum+=V;reactionMean+=U*V*V;
+  const t=Math.max(0,Math.min(1,V/VMAX)),j=i*4;
+  pixels.data[j]=Math.round(5+25*t);
+  pixels.data[j+1]=Math.round(10+185*t);
+  pixels.data[j+2]=Math.round(25+230*t);
+  pixels.data[j+3]=255;
+ }
+ if(!finite){
+  stop();
+  $('check').textContent='Numerical instability detected. Simulation stopped.';
+  return;
+ }
+ ctx.putImageData(pixels,0,0);
+ $('iterations').textContent=iteration.toLocaleString();
+ $('max').textContent=max.toFixed(5);
+ $('mean').textContent=(sum/N).toFixed(6);
+ $('reaction').textContent=(reactionMean/N).toFixed(8);
+ $('check').textContent=iteration===0?'✓ Initial conditions valid. V = 0.25 in seed regions.':max>0.001?'✓ Finite values; reaction–diffusion active.':'V is decaying; try adding seeds.';
+}
+function loop(){
+ if(!running)return;
+ const F=+$('feed').value,K=+$('kill').value,n=+$('speed').value;
+ for(let i=0;i<n;i++)step(F,K);
+ draw();
+ if(running)raf=requestAnimationFrame(loop);
+}
+function play(){
+ running=true;$('toggle').textContent='Ⅱ Pause';
+ cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+}
+function stop(){
+ running=false;cancelAnimationFrame(raf);
+ $('toggle').textContent='▶ Play';
+}
+function pause(){stop();draw()}
+$('toggle').onclick=()=>running?pause():play();
+$('reset').onclick=()=>{initialise();if(running)play()};
+$('add').onclick=()=>{for(let i=0;i<20;i++)seed(Math.random()*W,Math.random()*H,5);draw()};
+$('speed').oninput=()=>{$('sv').textContent=$('speed').value};
+$('feed').oninput=()=>{$('fv').textContent=(+$('feed').value).toFixed(4)};
+$('kill').oninput=()=>{$('kv').textContent=(+$('kill').value).toFixed(4)};
+root.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{
+ preset=b.dataset.p;
+ const p=settings[preset];
+ $('feed').value=p[0];$('kill').value=p[1];$('description').textContent=p[2];
+ root.querySelectorAll('[data-p]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b)});
+ $('fv').textContent=p[0].toFixed(4);$('kv').textContent=p[1].toFixed(4);
+ initialise();if(running)play();
+});
+let drawing=false,last=null;
+function paint(e){
+ const r=$('canvas').getBoundingClientRect();
+ const p=[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height];
+ // Fill in between pointer events so a fast drag leaves a continuous trail.
+ const n=last?Math.max(1,Math.ceil(Math.hypot(p[0]-last[0],p[1]-last[1])/3)):1;
+ for(let k=1;k<=n;k++){const f=last?k/n:1;seed(last?last[0]+(p[0]-last[0])*f:p[0],last?last[1]+(p[1]-last[1])*f:p[1],6)}
+ last=p;
+ if(!running)draw();
+}
+$('canvas').addEventListener('pointerdown',e=>{drawing=true;last=null;$('canvas').setPointerCapture(e.pointerId);paint(e)});
+$('canvas').addEventListener('pointermove',e=>{if(drawing)paint(e)});
+$('canvas').addEventListener('pointerup',()=>drawing=false);
+$('canvas').addEventListener('pointercancel',()=>drawing=false);
+initialise();
+// Respect reduced-motion preferences: show the initial state and wait for Play.
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){stop();draw()}else play();
+})();
+</script>
+</body>
+</html>

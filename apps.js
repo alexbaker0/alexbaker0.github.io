@@ -93,6 +93,14 @@ window.APPS = [
         status: "live",
         icon: "soup",
       },
+      {
+        name: "Turing Pattern Lab",
+        desc: "Two chemicals that react and spread grow spots, stripes, worms and coral. Tune the feed and kill rates, or draw your own seeds.",
+        tags: ["Chemistry", "Simulation"],
+        url: "/turing-patterns/",
+        status: "live",
+        icon: "turing",
+      },
     ],
   },
   {
