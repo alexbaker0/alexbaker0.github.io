@@ -163,7 +163,7 @@ window.APPS = [
       },
       {
         name: "Inverted Pendulum",
-        desc: "A cart on a rail learns to swing a pole up from any start and hold it still and upright. Throw the pole and watch it recover, or train a new brain live in your browser.",
+        desc: "A cart on a rail learns to swing a pole up from any start and hold it still and upright. Now with a chaotic double pendulum too. Throw it and watch it recover.",
         tags: ["PPO", "Control"],
         url: "/Inverted-pendulum/",
         status: "live",
